@@ -183,7 +183,7 @@
             <img class="delayed" src="Figures/next.png" onclick="jsnav(1)">
         </div>
         <img class="delayed" src="Figures/question.png" onclick="jsabout()">
-        <!-- <img class="delayed" src="Figures/clearCache.png" onclick="jsClearCache()"> -->
+        <img class="delayed" src="Figures/clearCache.png" onclick="jsClearCache()">
 
     </div>
     </div>
@@ -197,61 +197,33 @@
     <!-- The main page -->
     <div>
 
-
         <div id='chapterBody'>
             <table id='chapterBodyTable' class='verses'></table>
         </div>
 
         <!-- The about pop up -->
-        <div id='aboutBox' class="hidden popup">
-            <p>
-                <b>Multi-column Scriptures</b><br>
-                Brent Nelson, November 13, 2025<br>
-                For Personal Use Only<br>
-                Not endorsed by or affiliated with <br>
-                The Church of Jesus Christ <br>
-                of Latter Day Saints<br>
-                or<br>Brigham Young University
-            </p>
-            <div class="textLeft">
-                <p id="aboutChap">Chap goes here</p>
-                <p>Text size = <span id="textSize"></span>px,
-                    Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
-                <p>Not all volumes are available in all languages, <br>
-                    &nbsp; &nbsp; e.g. only parts of Chinese New Testament.
+        <dialog id="aboutDialog">
+            <form method="dialog">
+                <p>
+                    <b>Multi-column Scriptures</b><br>
+                    Brent Nelson, November 13, 2025<br>
+                    For Personal Use Only<br>
+                    Not endorsed by or affiliated with <br>
+                    The Church of Jesus Christ <br>
+                    of Latter Day Saints<br>
+                    or<br>Brigham Young University
                 </p>
-                <!-- <p>If viewing Chinese text in the latest Pleco app, <br>
-                    &nbsp; &nbsp; you can ask Pleco to colorize the character<br>
-                    &nbsp; &nbsp; tones using a Pleco setting. <br>
-                </p> -->
-            </div>
-            <button id='jsaboutBtn' onclick='return jsaboutok()'>OK</button>
-        </div>
-
-        <!-- The language selector menu -->
-        <div>
-            <table id='langsMenu' class='optionsMenu hidden popup'>
-                <tr>
-                    <td> Please choose languagex: </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select class='langOpt' id='opt0'> </select>
-                        <select class='langOpt' id='opt1'> </select>
-                        <select class='langOpt' id='opt2'> </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td> </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button id='langOKBtn' onclick='return jslangsOK()'>OK</button>
-                        <button id='langCancelBtn' onclick='return jslangcancel()'>Cancel</button>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                <div class="textLeft">
+                    <p id="aboutChap">Chap goes here</p>
+                    <p>Text size = <span id="textSize"></span>px,
+                        Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
+                    <p>Not all volumes are available in all languages, <br>
+                        &nbsp; &nbsp; e.g. only parts of Chinese New Testament.
+                    </p>
+                </div>
+                <button value="ok">OK</button>
+            </form>
+        </dialog>
 
         <!-- Tree Picker Dialog HTML -->
         <dialog id="pickerDialog">
@@ -286,24 +258,7 @@
 
 <script>
 
-    // Listeners so OK and Cancel buttons can be clicked from keyboard
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            if (!$("#aboutBox").hasClass('hidden')) $("#jsaboutBtn").click();
-            if (!$("#selectMenu").hasClass('hidden')) $("#selOKBtn").click();
-            if (!$("#langsMenu").hasClass('hidden')) $("#langOKBtn").click();
-        }
-        if (event.key === "Escape") {
-            if (!$("#aboutBox").hasClass('hidden')) {
-                $("#jsaboutBtn").click();
-            }
-            if (!$("#selectMenu").hasClass('hidden')) $("#selCancelBtn").click();
-            if (!$("#langsMenu").hasClass('hidden')) $("#langCancelBtn").click();
-        }
-    });
-
     //Variables to represent all the volumes, books, etc...
-
     let vols = {
         "bom": "Book of Mormon",
         "dc": "Doctrine and Covenants",
@@ -557,18 +512,7 @@
 
     //These are the global parameters
     let langs = ['eng', 'none', 'none']; // Initial value
-    const langNames = [
-        { ldsFull: "English", ldsAbbrev: "eng" },
-        { ldsFull: "简体中文 - 普通话", ldsAbbrev: "zhs" },
-        { ldsFull: "繁體中文 - 國語", ldsAbbrev: "zho" },
-        { ldsFull: "漢語拼音", ldsAbbrev: "cmn-Latn" },
-        { ldsFull: "Français", ldsAbbrev: "fra" },
-        { ldsFull: "Español", ldsAbbrev: "spa" },
-        { ldsFull: "Português(Brasil)", ldsAbbrev: "por" },
-        { ldsFull: "Deutsch", ldsAbbrev: "deu" },
-        { ldsFull: "日本語", ldsAbbrev: "jpn" },
-        { ldsFull: "none", ldsAbbrev: "none" },
-    ];
+
 
     let rec = allbooks[0];
     let params = {
@@ -690,6 +634,18 @@
     } // End of class ThreeListDialog
 
     var langscnt = 0; // Number of languages selected
+    const langNames = [
+        { ldsFull: "English", ldsAbbrev: "eng" },
+        { ldsFull: "简体中文 - 普通话", ldsAbbrev: "zhs" },
+        { ldsFull: "繁體中文 - 國語", ldsAbbrev: "zho" },
+        { ldsFull: "漢語拼音", ldsAbbrev: "cmn-Latn" },
+        { ldsFull: "Français", ldsAbbrev: "fra" },
+        { ldsFull: "Español", ldsAbbrev: "spa" },
+        { ldsFull: "Português(Brasil)", ldsAbbrev: "por" },
+        { ldsFull: "Deutsch", ldsAbbrev: "deu" },
+        { ldsFull: "日本語", ldsAbbrev: "jpn" },
+        { ldsFull: "None", ldsAbbrev: "none" },
+    ];
 
     function setupThreeListDialog() {
         const fullNames = langNames.map(lang => lang.ldsFull);
@@ -718,12 +674,14 @@
 
             if (!result) { return; }
 
+            // Convert full names back to abbreviations
             langs[0] = langNames.find(lang => lang.ldsFull === result.lang0)?.ldsAbbrev;
             langs[1] = langNames.find(lang => lang.ldsFull === result.lang1)?.ldsAbbrev;
             langs[2] = langNames.find(lang => lang.ldsFull === result.lang2)?.ldsAbbrev;
             langscnt = langs.filter(l => l !== "none").length;
 
-            if (langs[1] == 'none') {  // Move over if middle one is None
+            // Move over if middle one is none
+            if (langs[1] == 'none') {
                 langs[1] = langs[2];
                 langs[2] = 'none';
             }
@@ -749,7 +707,8 @@
         $("#textSize").text(params.siz);
         $("#screenWid").text(screen.width);
         $("#screenHt").text(screen.height);
-        showElement("aboutBox");
+        document.getElementById('aboutDialog').showModal();
+
     }
 
     //Called when user closes about pane
@@ -997,23 +956,6 @@
 
     }
 
-    // Called on startup to fill out the language selector menu
-    function addLangOpts(dropdown, doNone) {
-        for (let i = 0; i < langNames.length; i++) {
-            const lang = langNames[i];
-            const option1 = document.createElement('option');
-            option1.value = lang["ldsAbbrev"];
-            option1.textContent = lang["ldsFull"];
-            dropdown.appendChild(option1);
-        }
-        if (doNone) {
-            const option1 = document.createElement('option');
-            option1.value = 'none';
-            option1.textContent = 'None';
-            dropdown.appendChild(option1);
-        }
-    }
-
     function jsClearCache() {
         window.sessionStorage.clear();
         console.log("Cache cleared...");
@@ -1022,12 +964,6 @@
 
     function main() {  // Called after page loads
 
-        // First thing is to fill out the language selection menu
-        // The jquery: $("#opt0")[0] is equivalent to Javascript: document.getElementByID("opt0")
-        addLangOpts($("#opt0")[0], false);
-        addLangOpts($("#opt1")[0], true);
-        addLangOpts($("#opt2")[0], true);
-
         // Parse parameters out from cookie that is stored in browser
         // We want section starting with 'clds=...'
         let c = getCookie('mscripture');
@@ -1035,11 +971,11 @@
             params = JSON.parse(c);
             // Fix for old cookies out there (changed directory names to match Church website naming)
             //   For debugging can set: params.lang = ["eng", "simp", "py"];  // Old sample values that need changing
-            for (i in params.lang) {
-                if (params.lang[i] === 'simp') params.lang[i] = 'zhs';
-                if (params.lang[i] === 'trad') params.lang[i] = 'zho';
-                if (params.lang[i] === 'py') params.lang[i] = 'cmn-Latn';
-            }
+            // for (i in params.lang) {
+            //     if (params.lang[i] === 'simp') params.lang[i] = 'zhs';
+            //     if (params.lang[i] === 'trad') params.lang[i] = 'zho';
+            //     if (params.lang[i] === 'py') params.lang[i] = 'cmn-Latn';
+            // }
         }
 
         fixFontSize(params.siz);
