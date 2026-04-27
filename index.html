@@ -253,41 +253,6 @@
             </table>
         </div>
 
-        <!-- The book/chaoter select menu -->
-        <div id='selectMenu' class='optionsMenu hidden popup'>
-            <table>
-                <tr>
-                    <td> Please choose a book to read: </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select id="volSelect" onchange="populateBooks()">
-                            <option>&nbsp;</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select id="bookSelect" onchange="populateChaps()">
-                            <option>&nbsp;</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select id="chapSelect">
-                            <option>&nbsp;</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button id='selOKBtn' onclick='return jsseldone()'> OK </button>
-                        <button id='selCancelBtn' onclick='return jsselcancel()'> Cancel </button>
-                    </td>
-                </tr>
-            </table>
-        </div>
         <!-- Tree Picker Dialog HTML -->
         <dialog id="pickerDialog">
             <form method="dialog">
@@ -353,56 +318,56 @@
     }
 
     let allbooks = [
-        { "id": "1Ne", "book": "1 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "22" },
-        { "id": "2Ne", "book": "2 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "33" },
-        { "id": "Jacob", "book": "Jacob", "vol": "bom", "v": "Book of Mormon", "len": "7" },
-        { "id": "Enos", "book": "Enos", "vol": "bom", "v": "Book of Mormon", "len": "0" },
-        { "id": "Jarom", "book": "Jarom", "vol": "bom", "v": "Book of Mormon", "len": "0" },
-        { "id": "Omni", "book": "Omni", "vol": "bom", "v": "Book of Mormon", "len": "0" },
-        { "id": "WoM", "book": "Words of Mormon", "vol": "bom", "v": "Book of Mormon", "len": "0" },
-        { "id": "Mosiah", "book": "Mosiah", "vol": "bom", "v": "Book of Mormon", "len": "29" },
-        { "id": "Alma", "book": "Alma", "vol": "bom", "v": "Book of Mormon", "len": "63" },
-        { "id": "Hel", "book": "Helaman", "vol": "bom", "v": "Book of Mormon", "len": "16" },
-        { "id": "3Ne", "book": "3 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "30" },
-        { "id": "4Ne", "book": "4 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "0" },
-        { "id": "Morm", "book": "Mormon", "vol": "bom", "v": "Book of Mormon", "len": "9" },
-        { "id": "Ether", "book": "Ether", "vol": "bom", "v": "Book of Mormon", "len": "15" },
-        { "id": "Moro", "book": "Moroni", "vol": "bom", "v": "Book of Mormon", "len": "10" },
+        { id: "1Ne", book: "1 Nephi", vol: "bom", v: "Book of Mormon", len: "22" },
+        { id: "2Ne", book: "2 Nephi", vol: "bom", v: "Book of Mormon", len: "33" },
+        { id: "Jacob", book: "Jacob", vol: "bom", v: "Book of Mormon", len: "7" },
+        { id: "Enos", book: "Enos", vol: "bom", v: "Book of Mormon", len: "0" },
+        { id: "Jarom", book: "Jarom", vol: "bom", v: "Book of Mormon", len: "0" },
+        { id: "Omni", book: "Omni", vol: "bom", v: "Book of Mormon", len: "0" },
+        { id: "WoM", book: "Words of Mormon", vol: "bom", v: "Book of Mormon", len: "0" },
+        { id: "Mosiah", book: "Mosiah", vol: "bom", v: "Book of Mormon", len: "29" },
+        { id: "Alma", book: "Alma", vol: "bom", v: "Book of Mormon", len: "63" },
+        { id: "Hel", book: "Helaman", vol: "bom", v: "Book of Mormon", len: "16" },
+        { id: "3Ne", book: "3 Nephi", vol: "bom", v: "Book of Mormon", len: "30" },
+        { id: "4Ne", book: "4 Nephi", vol: "bom", v: "Book of Mormon", len: "0" },
+        { id: "Morm", book: "Mormon", vol: "bom", v: "Book of Mormon", len: "9" },
+        { id: "Ether", book: "Ether", vol: "bom", v: "Book of Mormon", len: "15" },
+        { id: "Moro", book: "Moroni", vol: "bom", v: "Book of Mormon", len: "10" },
 
-        { "id": "dc", "book": "Doctrine and Covenants", "vol": "dc", "v": "Doctrine and Covenants", "len": "138" },
+        { id: "dc", book: "Doctrine and Covenants", vol: "dc", v: "Doctrine and Covenants", len: "138" },
 
-        { "id": "Moses", "book": "Moses", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "8" },
-        { "id": "Abr", "book": "Abraham", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "5" },
-        { "id": "JSMatt", "book": "JS Matthew", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "0" },
-        { "id": "JSHist", "book": "JS History", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "0" },
+        { id: "Moses", book: "Moses", vol: "pgp", v: "Pearl of Great Price", v: "Pearl of Great Price", len: "8" },
+        { id: "Abr", book: "Abraham", vol: "pgp", v: "Pearl of Great Price", v: "Pearl of Great Price", len: "5" },
+        { id: "JSMatt", book: "JS Matthew", vol: "pgp", v: "Pearl of Great Price", v: "Pearl of Great Price", len: "0" },
+        { id: "JSHist", book: "JS History", vol: "pgp", v: "Pearl of Great Price", v: "Pearl of Great Price", len: "0" },
 
-        { "id": "Matt", "book": "Matthew", "vol": "nt", "v": "New Testament", "len": "28" },
-        { "id": "Mark", "book": "Mark", "vol": "nt", "v": "New Testament", "len": "16" },
-        { "id": "Luke", "book": "Luke", "vol": "nt", "v": "New Testament", "len": "24" },
-        { "id": "John", "book": "John", "vol": "nt", "v": "New Testament", "len": "21" },
-        { "id": "Acts", "book": "Acts", "vol": "nt", "v": "New Testament", "len": "28" },
-        { "id": "Rom", "book": "Romans", "vol": "nt", "v": "New Testament", "len": "16" },
-        { "id": "1Cor", "book": "1 Corinthians", "vol": "nt", "v": "New Testament", "len": "16" },
-        { "id": "2Cor", "book": "2 Corinthians", "vol": "nt", "v": "New Testament", "len": "13" },
-        { "id": "Gal", "book": "Galatians", "vol": "nt", "v": "New Testament", "len": "6" },
-        { "id": "Eph", "book": "Ephesians", "vol": "nt", "v": "New Testament", "len": "6" },
-        { "id": "Phi", "book": "Philippians", "vol": "nt", "v": "New Testament", "len": "4" },
-        { "id": "Col", "book": "Colossians", "vol": "nt", "v": "New Testament", "len": "4" },
-        { "id": "1Th", "book": "1 Thessalonians", "vol": "nt", "v": "New Testament", "len": "5" },
-        { "id": "2Th", "book": "2 Thessalonians", "vol": "nt", "v": "New Testament", "len": "3" },
-        { "id": "1Tim", "book": "1 Timothy", "vol": "nt", "v": "New Testament", "len": "6" },
-        { "id": "2Tim", "book": "2 Timothy", "vol": "nt", "v": "New Testament", "len": "4" },
-        { "id": "Titus", "book": "Titus", "vol": "nt", "v": "New Testament", "len": "3" },
-        { "id": "Philem", "book": "Philemon", "vol": "nt", "v": "New Testament", "len": "0" },
-        { "id": "Heb", "book": "Hebrews", "vol": "nt", "v": "New Testament", "len": "13" },
-        { "id": "Jas", "book": "James", "vol": "nt", "v": "New Testament", "len": "5" },
-        { "id": "1Pet", "book": "1 Peter", "vol": "nt", "v": "New Testament", "len": "5" },
-        { "id": "2Pet", "book": "2 Peter", "vol": "nt", "v": "New Testament", "len": "3" },
-        { "id": "1Jn", "book": "1 John", "vol": "nt", "v": "New Testament", "len": "5" },
-        { "id": "2Jn", "book": "2 John", "vol": "nt", "v": "New Testament", "len": "0" },
-        { "id": "3Jn", "book": "3 John", "vol": "nt", "v": "New Testament", "len": "0" },
-        { "id": "Jude", "book": "Jude", "vol": "nt", "v": "New Testament", "len": "0" },
-        { "id": "Rev", "book": "Revelations", "vol": "nt", "v": "New Testament", "len": "22" }
+        { id: "Matt", book: "Matthew", vol: "nt", v: "New Testament", len: "28" },
+        { id: "Mark", book: "Mark", vol: "nt", v: "New Testament", len: "16" },
+        { id: "Luke", book: "Luke", vol: "nt", v: "New Testament", len: "24" },
+        { id: "John", book: "John", vol: "nt", v: "New Testament", len: "21" },
+        { id: "Acts", book: "Acts", vol: "nt", v: "New Testament", len: "28" },
+        { id: "Rom", book: "Romans", vol: "nt", v: "New Testament", len: "16" },
+        { id: "1Cor", book: "1 Corinthians", vol: "nt", v: "New Testament", len: "16" },
+        { id: "2Cor", book: "2 Corinthians", vol: "nt", v: "New Testament", len: "13" },
+        { id: "Gal", book: "Galatians", vol: "nt", v: "New Testament", len: "6" },
+        { id: "Eph", book: "Ephesians", vol: "nt", v: "New Testament", len: "6" },
+        { id: "Phi", book: "Philippians", vol: "nt", v: "New Testament", len: "4" },
+        { id: "Col", book: "Colossians", vol: "nt", v: "New Testament", len: "4" },
+        { id: "1Th", book: "1 Thessalonians", vol: "nt", v: "New Testament", len: "5" },
+        { id: "2Th", book: "2 Thessalonians", vol: "nt", v: "New Testament", len: "3" },
+        { id: "1Tim", book: "1 Timothy", vol: "nt", v: "New Testament", len: "6" },
+        { id: "2Tim", book: "2 Timothy", vol: "nt", v: "New Testament", len: "4" },
+        { id: "Titus", book: "Titus", vol: "nt", v: "New Testament", len: "3" },
+        { id: "Philem", book: "Philemon", vol: "nt", v: "New Testament", len: "0" },
+        { id: "Heb", book: "Hebrews", vol: "nt", v: "New Testament", len: "13" },
+        { id: "Jas", book: "James", vol: "nt", v: "New Testament", len: "5" },
+        { id: "1Pet", book: "1 Peter", vol: "nt", v: "New Testament", len: "5" },
+        { id: "2Pet", book: "2 Peter", vol: "nt", v: "New Testament", len: "3" },
+        { id: "1Jn", book: "1 John", vol: "nt", v: "New Testament", len: "5" },
+        { id: "2Jn", book: "2 John", vol: "nt", v: "New Testament", len: "0" },
+        { id: "3Jn", book: "3 John", vol: "nt", v: "New Testament", len: "0" },
+        { id: "Jude", book: "Jude", vol: "nt", v: "New Testament", len: "0" },
+        { id: "Rev", book: "Revelations", vol: "nt", v: "New Testament", len: "22" }
     ];
 
 
@@ -539,7 +504,7 @@
         allbooks.forEach(b => {
             if (!data[b.v]) data[b.v] = {};
             if (b.len == "0")
-                data[b.v][b.book] = ["0"];
+                data[b.v][b.book] = [0];
             else {
                 // alert(b.v + b.book + b.len);
                 data[b.v][b.book] = Array.from({ length: parseInt(b.len) }, (_, i) => String(i + 1));
@@ -559,19 +524,10 @@
         document.getElementById("treePickerOpenDialog").addEventListener("click", async () => {
             const result = await treePicker.open();
 
-            // if (result) {
-            //     alert("User picked:" + JSON.stringify(result));
-            // } else {
-            //     alert("User cancelled");
-            // }
-
             // Find the record in allbooks that matches the user's selection
-            const criteria = { "v": result["volume"], "book": result["book"] };
-            // alert("Looking for match with criteria: " + JSON.stringify(criteria));
+            const criteria = { v: result.volume, book: result.book };
             const match = allbooks.find(item =>
-                Object.entries(criteria).every(
-                    ([key, value]) => item[key] === value
-                )
+                Object.entries(criteria).every(([key, value]) => item[key] === value)
             );
 
             if (!match) {
@@ -582,14 +538,11 @@
                 return;
             }
 
-            params.vol = ivols[result["volume"]];
-            params.book = result["book"];
-            // alert(JSON.stringify(result));
-            params.chap = parseInt(result["chapter"]);
-            params.id = match["id"];
-            params.len = match["len"];
-
-            // alert("Params: " + params.vol + " " + params.book + " " + params.chap + " " + params.id + " " + params.len);
+            params.vol = ivols[result.volume];
+            params.book = result.book;
+            params.chap = parseInt(result.chapter);
+            params.id = match.id;
+            params.len = match.len;
 
             // checkForNoPinyin();
             getAndRenderData();
@@ -605,53 +558,26 @@
     //These are the global parameters
     let langs = ['eng', 'none', 'none']; // Initial value
     let langNames = [
-        {
-            "ldsFull": "English",
-            "ldsAbbrev": "eng"
-        },
-        {
-            "ldsFull": "简体中文 - 普通话",
-            "ldsAbbrev": "zhs"
-        },
-        {
-            "ldsFull": "繁體中文 - 國語",
-            "ldsAbbrev": "zho"
-        },
-        {
-            "ldsFull": "漢語拼音",
-            "ldsAbbrev": "cmn-Latn"
-        },
-        {
-            "ldsFull": "Français",
-            "ldsAbbrev": "fra"
-        },
-        {
-            "ldsFull": "Español",
-            "ldsAbbrev": "spa"
-        },
-        {
-            "ldsFull": "Português(Brasil)",
-            "ldsAbbrev": "por"
-        },
-        {
-            "ldsFull": "Deutsch",
-            "ldsAbbrev": "deu"
-        },
-        {
-            "ldsFull": "日本語",
-            "ldsAbbrev": "jpn"
-        },
+        { "ldsFull": "English", "ldsAbbrev": "eng" },
+        { "ldsFull": "简体中文 - 普通话", "ldsAbbrev": "zhs" },
+        { "ldsFull": "繁體中文 - 國語", "ldsAbbrev": "zho" },
+        { "ldsFull": "漢語拼音", "ldsAbbrev": "cmn-Latn" },
+        { "ldsFull": "Français", "ldsAbbrev": "fra" },
+        { "ldsFull": "Español", "ldsAbbrev": "spa" },
+        { "ldsFull": "Português(Brasil)", "ldsAbbrev": "por" },
+        { "ldsFull": "Deutsch", "ldsAbbrev": "deu" },
+        { "ldsFull": "日本語", "ldsAbbrev": "jpn" },
     ];
 
     let rec = allbooks[0];
     let params = {
-        'siz': 18,
-        'vol': 'bom',
-        'book': rec.book,
-        'chap': 1,
-        'id': rec.id,
-        'len': rec.len,
-        'lang': langs,
+        siz: 18,
+        vol: 'bom',
+        book: rec.book,
+        chap: 1,
+        id: rec.id,
+        len: rec.len,
+        lang: langs,
     };
     let VERBOSE = 1;
     let responseText = null;
@@ -659,13 +585,9 @@
     let minFontSize = 30;
 
     //Miscellaneous functions
-    function showElement(v) {
-        $("#" + v).removeClass('hidden');
-    }
+    function showElement(v) { $("#" + v).removeClass('hidden'); }
 
-    function hideElement(v) {
-        $("#" + v).addClass('hidden');
-    }
+    function hideElement(v) { $("#" + v).addClass('hidden'); }
 
     //Called to change size of scalable text on page
     let btmp = 100;
@@ -758,149 +680,11 @@
         }
     }
 
-    //This section has to do with selecting a new book and chapter to read
-
-    //Called when user clicks the 書 button
-    function jssel() {
-        clearSelectsAndDisplayOptions();
-
-        // Display entire language selection pane
-        showElement("selectMenu");
-
-        // Populate and set volume pull down with current volume
-        populateVols().value = params.vol;
-
-        // Populate book pull down and select current book
-        populateBooks().value = params.id;
-
-        // Populate chaps pulldown and select current book
-        populateChaps().value = params.chap;
-    }
-
-    function clearSelect(v) {
-        let s = $("#" + v)[0];
-        while (s.options.length > 0) {
-            s.remove(0);
-        }
-    }
-
-    //Clear out select box contents and display all options boxes
-    function clearSelectsAndDisplayOptions() {
-        const itms = ["volSelect", "bookSelect", "chapSelect"];
-        for (let itm of itms) clearSelect(itm);
-        for (let itm of itms) showElement(itm);
-    }
-
-    function addOption(s, val, name) {
-        option = document.createElement("option");
-        option.value = val;
-        option.text = name;
-        s.add(option);
-    }
-
-    function populateVols() {
-        let s = $("#volSelect")[0];
-        console.log(s);
-        for (let key in vols) {
-            addOption(s, key, vols[key]);
-        }
-        return s;
-    }
-
-    //Called when a new volume is selected, populates book pulldown with appropriate values
-    function populateBooks() {
-        console.log("Calling populateBooks...");
-        // Turn on book select option pull down (may have been previously hidden)
-        showElement("bookSelect");
-
-        // Clear out the bookSelect pulldown
-        clearSelect("bookSelect");
-
-        // Depending on the volume chosen, add book options
-        let vol = $("#volSelect").val();
-        let bs = $("#bookSelect")[0];
-        for (b in allbooks) {
-            let r = allbooks[b];
-            if (r.vol == vol)
-                addOption(bs, r.id, r.book);
-        }
-        bs.selectedIndex = 0;
-
-        // If it is the D&C, hide book pulldown
-        console.log("Check volume: " + vol);
-        if (vol == "dc")
-            hideElement("bookSelect");
-
-        populateChaps();
-        return bs;
-    }
-
-    //Called when a new book is selected, populates chapter pulldown with appropriate values
-    function populateChaps() {
-
-        // Turn on chap select option pull down (may have been previously hidden)
-        showElement("chapSelect");
-
-        // Clear out the chapSelect options
-        clearSelect("chapSelect");
-
-        // Get newly selected volume and book
-        let id = $("#bookSelect").val();
-        let r = getBook(id);
-
-        // Depending on the book chosen, add chapter options or hide chap pulldown
-        let cs = $("#chapSelect")[0];
-        cs.selectedIndex = 0;
-
-        if (r.len == 0) {
-            hideElement("chapSelect");
-            addOption(cs, 0, "0");
-        }
-        else {
-            let chapcnt = parseInt(r.len, 10);
-            for (let i = 1; i <= chapcnt; i++)
-                addOption(cs, i, i.toString());
-        }
-        return cs;
-    }
-
-    //Called when user clicks Cancel in book selection pane
-    function jsselcancel() {
-        hideElement("selectMenu");
-    }
-
-    //Called when user clicks OK in book selection pane
-    function jsseldone() {
-        let vol = $("#volSelect").val();
-        let id = $("#bookSelect").val();
-        let chap = $("#chapSelect").val();
-
-        // Set global parameters accordingly and fetch new data
-        rec = getBook(id);
-        params.vol = rec.vol;
-        params.book = rec.book;
-        params.chap = rec.chap;
-        params.id = rec.id;
-        params.len = rec.len;
-
-        // hideElement("selectMenu");
-        // checkForNoPinyin();
-        getAndRenderData();
-    }
-
     function checkForNoPinyin() {
         // No pinyin exists for New Testament
         if (params.vol == 'nt')
             if (langs.indexOf('cmn-Latn') != -1)
                 alert("Sorry, no PinYin exists for the " + vols[params.vol]);
-    }
-
-    function getBook(id) {
-        for (let i = 0; i < allbooks.length; i++)
-            if (allbooks[i].id == id)
-                return allbooks[i];
-        alert("Internal error: getBook(" + id + ")");
-        return "";
     }
 
     // Create the title string for the current chapter.
