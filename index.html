@@ -1,0 +1,1195 @@
+<!-- multiscripture - HTML, CSS, and JS all in one file.  
+	Why?  
+	The main reason is that PLECO's web browser (a common Chinese reading tool)
+    causes problems with caching.  
+	Putting it all into one file seems to fix that.
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv='Content-type' content='text/html;charset=UTF-8'>
+    <!-- <script src="cldsc.js" ></script> -->
+    <!-------------------------------------------->
+    <!-- THe CSS stuff -->
+    <style>
+        /* The body tag */
+        body {
+            margin: 0.2rem;
+        }
+
+        /* All the navbar stuff */
+        #navbar {
+            /*overflow: hidden; */
+            background-color: #a0d0ff;
+            /* color: white; */
+            /* Text color */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.5rem;
+        }
+
+        #navbar img {
+            height: 1.2rem;
+            margin: 0.1rem;
+            margin-top: 0.4rem;
+        }
+
+        /* Interesting way to highlight the menu icons up top by inverting them */
+        #navbar img:active {
+            filter: invert(100%);
+        }
+
+        .delayed {
+            transition: all 0.1s;
+            transition-delay: 50ms;
+        }
+
+        .delayed:active {
+            transition: none;
+        }
+
+        /* @media (hover: hover) {
+            #navbar img:hover {
+                filter: invert(100%);
+            }
+        } */
+
+        /* The title stuff just below the nav bar */
+        #titleBox {
+            color: black;
+            text-align: center;
+            font-weight: bold;
+            font-family: Arial;
+            padding-top: 2.5rem;
+        }
+
+        /* This gets the table looking correct, even with Japanese */
+        #chapterBodyTable {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /*  First row of chapter contents table*/
+        .chapterHeading {
+            background: #d1edff;
+            /* #D1EDF9 is good alternative */
+        }
+
+        /* The verses table (heading and body) */
+        .verses {
+            /* padding:26px; */
+            border-spacing: 0.3rem;
+            /* width:100%; */
+        }
+
+        /* The individual verses */
+        .verses td {
+            vertical-align: top;
+            /* This next one is needed, but why 30% */
+            width: 30%;
+            /* word-wrap: break-word; */
+            padding-right: 0px;
+            padding-left: 10px;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            /* Applies 10 pixels of padding on all four sides */
+        }
+
+        .verses td span {
+            display: inline-block;
+        }
+
+        /* The popup menus (language select, chapter select, about box) */
+        .optionsMenu {
+            border-style: none;
+            border-width: 10px;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            padding: 20px;
+        }
+
+        /* Book selection menu */
+        #selectMenu {
+            background: rgb(207, 245, 207);
+            /* display:none; */
+        }
+
+        /* Language selection menu */
+        #langsMenu {
+            background: rgb(159, 218, 237);
+            ;
+            /* display:none; */
+        }
+
+        /* The about box and histPercent selection */
+        #aboutBox {
+            background: rgb(259, 218, 237);
+            ;
+            text-align: center;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            padding: 20px;
+            font-size: 0.8rem;
+        }
+
+        #aboutBox #histp {
+            font-size: 0.7rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .textLeft {
+            text-align: left;
+        }
+
+        .popup button {
+            font-size: 0.8rem;
+            border-radius: 10%;
+        }
+
+        select {
+            font-size: 0.8rem;
+        }
+    </style>
+    <!-------------------------------------------->
+</head>
+
+<!-- The body of the page -->
+
+<body onload="main()">
+
+    <!-- The fixed navigation bar at the top -->
+    <div id="navbar">
+        <img class="delayed" id="treePickerOpenDialog" src="./Figures/book.png">
+        <!-- <img class="delayed" src="./Figures/book.png" onclick="jssel()"> -->
+        <img class="delayed" src="Figures/lang.png" onclick="jslangs()">
+        <div>
+            <img class="delayed" src="Figures/big.png" onclick="jssiz(2, 0)">
+            <img class="delayed" src="Figures/small.png" onclick="jssiz(-2, 0)">
+        </div>
+        <div>
+            <img class="delayed" src="Figures/prev.png" onclick="jsnav(-1)">
+            <img class="delayed" src="Figures/next.png" onclick="jsnav(1)">
+        </div>
+        <img class="delayed" src="Figures/question.png" onclick="jsabout()">
+        <!-- <img class="delayed" src="Figures/clearCache.png" onclick="jsClearCache()"> -->
+
+    </div>
+    </div>
+
+    <!-- The title section just below the navigation bar-->
+    <div id='titleBox'>
+        Multi-column Scriptures<br>
+        <p id='currentChapTitleBox'>Loading initial data...</p>
+    </div>
+
+    <!-- The main page -->
+    <div>
+
+
+        <div id='chapterBody'>
+            <table id='chapterBodyTable' class='verses'></table>
+        </div>
+
+        <!-- The about pop up -->
+        <div id='aboutBox' class="hidden popup">
+            <p>
+                <b>Multi-column Scriptures</b><br>
+                Brent Nelson, November 13, 2025<br>
+                For Personal Use Only<br>
+                Not endorsed by or affiliated with <br>
+                The Church of Jesus Christ <br>
+                of Latter Day Saints<br>
+                or<br>Brigham Young University
+            </p>
+            <div class="textLeft">
+                <p id="aboutChap">Chap goes here</p>
+                <p>Text size = <span id="textSize"></span>px,
+                    Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
+                <p>Not all volumes are available in all languages, <br>
+                    &nbsp; &nbsp; e.g. only parts of Chinese New Testament.
+                </p>
+                <!-- <p>If viewing Chinese text in the latest Pleco app, <br>
+                    &nbsp; &nbsp; you can ask Pleco to colorize the character<br>
+                    &nbsp; &nbsp; tones using a Pleco setting. <br>
+                </p> -->
+            </div>
+            <button id='jsaboutBtn' onclick='return jsaboutok()'>OK</button>
+        </div>
+
+        <!-- The language selector menu -->
+        <div>
+            <table id='langsMenu' class='optionsMenu hidden popup'>
+                <tr>
+                    <td> Please choose languagex: </td>
+                </tr>
+                <tr>
+                    <td>
+                        <select class='langOpt' id='opt0'> </select>
+                        <select class='langOpt' id='opt1'> </select>
+                        <select class='langOpt' id='opt2'> </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td> </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button id='langOKBtn' onclick='return jslangsOK()'>OK</button>
+                        <button id='langCancelBtn' onclick='return jslangcancel()'>Cancel</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- The book/chaoter select menu -->
+        <div id='selectMenu' class='optionsMenu hidden popup'>
+            <table>
+                <tr>
+                    <td> Please choose a book to read: </td>
+                </tr>
+                <tr>
+                    <td>
+                        <select id="volSelect" onchange="populateBooks()">
+                            <option>&nbsp;</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <select id="bookSelect" onchange="populateChaps()">
+                            <option>&nbsp;</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <select id="chapSelect">
+                            <option>&nbsp;</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button id='selOKBtn' onclick='return jsseldone()'> OK </button>
+                        <button id='selCancelBtn' onclick='return jsselcancel()'> Cancel </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <!-- Tree Picker Dialog HTML -->
+        <dialog id="pickerDialog">
+            <form method="dialog">
+                <h3>Select Passage</h3>
+
+                <label>
+                    Volume:
+                    <select id="volumeSelect"></select>
+                </label>
+
+                <label>
+                    Book:
+                    <select id="bookSelect"></select>
+                </label>
+
+                <label>
+                    Chapter:
+                    <select id="chapterSelect"></select>
+                </label>
+
+                <div style="margin-top:15px; text-align:right;">
+                    <button value="cancel">Cancel</button>
+                    <button value="ok">OK</button>
+                </div>
+            </form>
+        </dialog>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+
+    // Listeners so OK and Cancel buttons can be clicked from keyboard
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            if (!$("#aboutBox").hasClass('hidden')) $("#jsaboutBtn").click();
+            if (!$("#selectMenu").hasClass('hidden')) $("#selOKBtn").click();
+            if (!$("#langsMenu").hasClass('hidden')) $("#langOKBtn").click();
+        }
+        if (event.key === "Escape") {
+            if (!$("#aboutBox").hasClass('hidden')) {
+                $("#jsaboutBtn").click();
+            }
+            if (!$("#selectMenu").hasClass('hidden')) $("#selCancelBtn").click();
+            if (!$("#langsMenu").hasClass('hidden')) $("#langCancelBtn").click();
+        }
+    });
+
+    //Variables to represent all the volumes, books, etc...
+
+    let vols = {
+        "bom": "Book of Mormon",
+        "dc": "Doctrine and Covenants",
+        "pgp": "Pearl of Great Price",
+        "nt": "New Testament"
+    }
+    let ivols = {
+        "Book of Mormon": "bom",
+        "Doctrine and Covenants": "dc",
+        "Pearl of Great Price": "pgp",
+        "New Testament": "nt"
+    }
+
+    let allbooks = [
+        { "id": "1Ne", "book": "1 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "22" },
+        { "id": "2Ne", "book": "2 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "33" },
+        { "id": "Jacob", "book": "Jacob", "vol": "bom", "v": "Book of Mormon", "len": "7" },
+        { "id": "Enos", "book": "Enos", "vol": "bom", "v": "Book of Mormon", "len": "0" },
+        { "id": "Jarom", "book": "Jarom", "vol": "bom", "v": "Book of Mormon", "len": "0" },
+        { "id": "Omni", "book": "Omni", "vol": "bom", "v": "Book of Mormon", "len": "0" },
+        { "id": "WoM", "book": "Words of Mormon", "vol": "bom", "v": "Book of Mormon", "len": "0" },
+        { "id": "Mosiah", "book": "Mosiah", "vol": "bom", "v": "Book of Mormon", "len": "29" },
+        { "id": "Alma", "book": "Alma", "vol": "bom", "v": "Book of Mormon", "len": "63" },
+        { "id": "Hel", "book": "Helaman", "vol": "bom", "v": "Book of Mormon", "len": "16" },
+        { "id": "3Ne", "book": "3 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "30" },
+        { "id": "4Ne", "book": "4 Nephi", "vol": "bom", "v": "Book of Mormon", "len": "0" },
+        { "id": "Morm", "book": "Mormon", "vol": "bom", "v": "Book of Mormon", "len": "9" },
+        { "id": "Ether", "book": "Ether", "vol": "bom", "v": "Book of Mormon", "len": "15" },
+        { "id": "Moro", "book": "Moroni", "vol": "bom", "v": "Book of Mormon", "len": "10" },
+
+        { "id": "dc", "book": "Doctrine and Covenants", "vol": "dc", "v": "Doctrine and Covenants", "len": "138" },
+
+        { "id": "Moses", "book": "Moses", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "8" },
+        { "id": "Abr", "book": "Abraham", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "5" },
+        { "id": "JSMatt", "book": "JS Matthew", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "0" },
+        { "id": "JSHist", "book": "JS History", "vol": "pgp", "v": "Pearl of Great Price", "v": "Pearl of Great Price", "len": "0" },
+
+        { "id": "Matt", "book": "Matthew", "vol": "nt", "v": "New Testament", "len": "28" },
+        { "id": "Mark", "book": "Mark", "vol": "nt", "v": "New Testament", "len": "16" },
+        { "id": "Luke", "book": "Luke", "vol": "nt", "v": "New Testament", "len": "24" },
+        { "id": "John", "book": "John", "vol": "nt", "v": "New Testament", "len": "21" },
+        { "id": "Acts", "book": "Acts", "vol": "nt", "v": "New Testament", "len": "28" },
+        { "id": "Rom", "book": "Romans", "vol": "nt", "v": "New Testament", "len": "16" },
+        { "id": "1Cor", "book": "1 Corinthians", "vol": "nt", "v": "New Testament", "len": "16" },
+        { "id": "2Cor", "book": "2 Corinthians", "vol": "nt", "v": "New Testament", "len": "13" },
+        { "id": "Gal", "book": "Galatians", "vol": "nt", "v": "New Testament", "len": "6" },
+        { "id": "Eph", "book": "Ephesians", "vol": "nt", "v": "New Testament", "len": "6" },
+        { "id": "Phi", "book": "Philippians", "vol": "nt", "v": "New Testament", "len": "4" },
+        { "id": "Col", "book": "Colossians", "vol": "nt", "v": "New Testament", "len": "4" },
+        { "id": "1Th", "book": "1 Thessalonians", "vol": "nt", "v": "New Testament", "len": "5" },
+        { "id": "2Th", "book": "2 Thessalonians", "vol": "nt", "v": "New Testament", "len": "3" },
+        { "id": "1Tim", "book": "1 Timothy", "vol": "nt", "v": "New Testament", "len": "6" },
+        { "id": "2Tim", "book": "2 Timothy", "vol": "nt", "v": "New Testament", "len": "4" },
+        { "id": "Titus", "book": "Titus", "vol": "nt", "v": "New Testament", "len": "3" },
+        { "id": "Philem", "book": "Philemon", "vol": "nt", "v": "New Testament", "len": "0" },
+        { "id": "Heb", "book": "Hebrews", "vol": "nt", "v": "New Testament", "len": "13" },
+        { "id": "Jas", "book": "James", "vol": "nt", "v": "New Testament", "len": "5" },
+        { "id": "1Pet", "book": "1 Peter", "vol": "nt", "v": "New Testament", "len": "5" },
+        { "id": "2Pet", "book": "2 Peter", "vol": "nt", "v": "New Testament", "len": "3" },
+        { "id": "1Jn", "book": "1 John", "vol": "nt", "v": "New Testament", "len": "5" },
+        { "id": "2Jn", "book": "2 John", "vol": "nt", "v": "New Testament", "len": "0" },
+        { "id": "3Jn", "book": "3 John", "vol": "nt", "v": "New Testament", "len": "0" },
+        { "id": "Jude", "book": "Jude", "vol": "nt", "v": "New Testament", "len": "0" },
+        { "id": "Rev", "book": "Revelations", "vol": "nt", "v": "New Testament", "len": "22" }
+    ];
+
+
+
+    class TreePickerDialog {
+        constructor(options) {
+            this.data = options.data;
+            this.storageKey = options.storageKey || null;
+
+            this.dialog = document.getElementById(options.dialogId);
+            this.volumeSelect = this.dialog.querySelector("#volumeSelect");
+            this.bookSelect = this.dialog.querySelector("#bookSelect");
+            this.chapterSelect = this.dialog.querySelector("#chapterSelect");
+
+            this._wireEvents();
+        }
+
+        _wireEvents() {
+            this.volumeSelect.addEventListener("change", () => {
+                this._populateBooks();
+                this._autoSave();
+            });
+
+            this.bookSelect.addEventListener("change", () => {
+                this._populateChapters();
+                this._autoSave();
+            });
+
+            this.chapterSelect.addEventListener("change", () => {
+                this._autoSave();
+            });
+        }
+
+        _populateVolumes() {
+            this.volumeSelect.innerHTML = "";
+            Object.keys(this.data).forEach(v => {
+                this.volumeSelect.add(new Option(v, v));
+            });
+        }
+
+        _populateBooks() {
+            const v = this.volumeSelect.value;
+            this.bookSelect.innerHTML = "";
+
+            Object.keys(this.data[v]).forEach(b => {
+                this.bookSelect.add(new Option(b, b));
+            });
+
+            this._populateChapters();
+        }
+
+        _populateChapters() {
+            const v = this.volumeSelect.value;
+            const b = this.bookSelect.value;
+
+            this.chapterSelect.innerHTML = "";
+
+            this.data[v][b].forEach(c => {
+                this.chapterSelect.add(new Option(c, c));
+            });
+        }
+
+        _loadSaved() {
+            if (!this.storageKey) return null;
+            try {
+                return JSON.parse(localStorage.getItem(this.storageKey));
+            } catch {
+                return null;
+            }
+        }
+
+        _autoSave() {
+            if (!this.storageKey) return;
+
+            const current = this.getSelection();
+            localStorage.setItem(this.storageKey, JSON.stringify(current));
+        }
+
+        _applySelection(saved) {
+            if (!saved || !this.data[saved.volume]) {
+                this._populateBooks();
+                return;
+            }
+
+            this.volumeSelect.value = saved.volume;
+            this._populateBooks();
+
+            if (this.data[saved.volume][saved.book]) {
+                this.bookSelect.value = saved.book;
+                this._populateChapters();
+
+                if (this.data[saved.volume][saved.book].includes(saved.chapter)) {
+                    this.chapterSelect.value = saved.chapter;
+                }
+            }
+        }
+
+        getSelection() {
+            return {
+                volume: this.volumeSelect.value,
+                book: this.bookSelect.value,
+                chapter: this.chapterSelect.value
+            };
+        }
+
+        open() {
+            return new Promise(resolve => {
+                this._populateVolumes();
+
+                const saved = this._loadSaved();
+                this._applySelection(saved);
+
+                this.dialog.showModal();
+
+                const handler = () => {
+                    this.dialog.removeEventListener("close", handler);
+
+                    if (this.dialog.returnValue === "ok") {
+                        const result = this.getSelection();
+                        this._autoSave();
+                        resolve(result);
+                    } else {
+                        resolve(null);
+                    }
+                };
+
+                this.dialog.addEventListener("close", handler);
+            });
+        }
+    } // End of class TreePickerDialog
+
+    function buildTreePickerData() {
+        data = {};
+        allbooks.forEach(b => {
+            if (!data[b.v]) data[b.v] = {};
+            if (b.len == "0")
+                data[b.v][b.book] = ["0"];
+            else {
+                // alert(b.v + b.book + b.len);
+                data[b.v][b.book] = Array.from({ length: parseInt(b.len) }, (_, i) => String(i + 1));
+                // alert(data[b.v][b.book]);
+            }
+        });
+        return data;
+    }
+
+    function setupTreePicker() {
+        const treePicker = new TreePickerDialog({
+            dialogId: "pickerDialog",
+            data: buildTreePickerData(),
+            storageKey: "lastSelection" // optional
+        });
+
+        document.getElementById("treePickerOpenDialog").addEventListener("click", async () => {
+            const result = await treePicker.open();
+
+            // if (result) {
+            //     alert("User picked:" + JSON.stringify(result));
+            // } else {
+            //     alert("User cancelled");
+            // }
+
+            // Find the record in allbooks that matches the user's selection
+            const criteria = { "v": result["volume"], "book": result["book"] };
+            // alert("Looking for match with criteria: " + JSON.stringify(criteria));
+            const match = allbooks.find(item =>
+                Object.entries(criteria).every(
+                    ([key, value]) => item[key] === value
+                )
+            );
+
+            if (!match) {
+                alert("No match found for selection: " + JSON.stringify(result));
+                return;
+            } else if (match.length > 1) {
+                alert("Multiple matches found for selection: " + JSON.stringify(result));
+                return;
+            }
+
+            params.vol = ivols[result["volume"]];
+            params.book = result["book"];
+            // alert(JSON.stringify(result));
+            params.chap = parseInt(result["chapter"]);
+            params.id = match["id"];
+            params.len = match["len"];
+
+            // alert("Params: " + params.vol + " " + params.book + " " + params.chap + " " + params.id + " " + params.len);
+
+            // checkForNoPinyin();
+            getAndRenderData();
+
+        });
+    }
+    setupTreePicker();
+
+
+    let navScaleFactor = 1.0;
+    let selScaleFactor = 0.7;
+
+    //These are the global parameters
+    let langs = ['eng', 'none', 'none']; // Initial value
+    let langNames = [
+        {
+            "ldsFull": "English",
+            "ldsAbbrev": "eng"
+        },
+        {
+            "ldsFull": "简体中文 - 普通话",
+            "ldsAbbrev": "zhs"
+        },
+        {
+            "ldsFull": "繁體中文 - 國語",
+            "ldsAbbrev": "zho"
+        },
+        {
+            "ldsFull": "漢語拼音",
+            "ldsAbbrev": "cmn-Latn"
+        },
+        {
+            "ldsFull": "Français",
+            "ldsAbbrev": "fra"
+        },
+        {
+            "ldsFull": "Español",
+            "ldsAbbrev": "spa"
+        },
+        {
+            "ldsFull": "Português(Brasil)",
+            "ldsAbbrev": "por"
+        },
+        {
+            "ldsFull": "Deutsch",
+            "ldsAbbrev": "deu"
+        },
+        {
+            "ldsFull": "日本語",
+            "ldsAbbrev": "jpn"
+        },
+    ];
+
+    let rec = allbooks[0];
+    let params = {
+        'siz': 18,
+        'vol': 'bom',
+        'book': rec.book,
+        'chap': 1,
+        'id': rec.id,
+        'len': rec.len,
+        'lang': langs,
+    };
+    let VERBOSE = 1;
+    let responseText = null;
+    let dat = [0];
+    let minFontSize = 30;
+
+    //Miscellaneous functions
+    function showElement(v) {
+        $("#" + v).removeClass('hidden');
+    }
+
+    function hideElement(v) {
+        $("#" + v).addClass('hidden');
+    }
+
+    //Called to change size of scalable text on page
+    let btmp = 100;
+    function jssiz(v, newbase) {
+
+        // Increment size value
+        params.siz = (newbase != 0) ? newbase : params.siz + v;
+
+        fixFontSize(params.siz);
+
+        // Set HTML root size in response to new size.  
+        // This is an OK use of changing the style.
+        $("html").css("fontSize", params.siz + "px");
+
+        // Save new params.siz
+        setCookie('mscripture', JSON.stringify(params), 14);
+    }
+
+    //Called when user clicks next or previous buttons
+    function jsnav(val) {
+        if ((val == -1 && (params.chap <= 1)) || (val == 1 && (params.chap >= params.len)))
+            return;
+        params.chap = parseInt(params.chap) + val;
+        getAndRenderData();
+        window.scroll(0, 0);
+    }
+
+    //Called when user hits 言 button
+    function jslangs() {
+        alert("1")
+        // Update language selectors with current languages and display
+        for (let i = 0; i < 3; i++)
+            $("#opt" + i).val(langs[i]);
+        // showElement("langsMenu");
+        alert("jslangs")
+    }
+
+    var langscnt = 0; // Number of languages selected
+
+    //Called when user selects OK in language selection pane
+    function jslangsOK() {
+        hideElement("langsMenu");
+
+        // Read selection values into variables
+        langscnt = 0;
+        for (let i = 0; i < 3; i++) {
+            langs[i] = $('#opt' + i).val();
+            if (langs[i] != 'none')
+                langscnt++;
+        }
+        if (langs[1] == 'none') {  // Move over if middle one is None
+            langs[1] = langs[2];
+            langs[2] = 'none';
+        }
+        console.log(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
+        alert(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
+        // checkForNoPinyin();
+        params.lang = langs;
+        setCookie('mscripture', JSON.stringify(params), 14);
+        alert("2")
+        getAndRenderData();
+        alert("3")
+    }
+
+    //Called when user cancels language selection pane
+    function jslangcancel() {
+        alert("jslangcancel")
+        hideElement("langsMenu");
+    }
+
+    function jsabout() {
+        // Fill in values in aboutBox
+        if (params.chap > 0)
+            $('#aboutChap').text(`Current location = ${params.id}:${params.chap}`);
+        else
+            $("#aboutChap").text(`Current location = ${params.book}`);
+        $("#textSize").text(params.siz);
+        $("#screenWid").text(screen.width);
+        $("#screenHt").text(screen.height);
+        showElement("aboutBox");
+    }
+
+    //Called when user closes about pane
+    function jsaboutok() {
+        hideElement("aboutBox");
+        getAndRenderData();
+        if (params.book === "Jude") {
+            jsClearCache();
+            alert("Cache cleared...");
+        }
+    }
+
+    //This section has to do with selecting a new book and chapter to read
+
+    //Called when user clicks the 書 button
+    function jssel() {
+        clearSelectsAndDisplayOptions();
+
+        // Display entire language selection pane
+        showElement("selectMenu");
+
+        // Populate and set volume pull down with current volume
+        populateVols().value = params.vol;
+
+        // Populate book pull down and select current book
+        populateBooks().value = params.id;
+
+        // Populate chaps pulldown and select current book
+        populateChaps().value = params.chap;
+    }
+
+    function clearSelect(v) {
+        let s = $("#" + v)[0];
+        while (s.options.length > 0) {
+            s.remove(0);
+        }
+    }
+
+    //Clear out select box contents and display all options boxes
+    function clearSelectsAndDisplayOptions() {
+        const itms = ["volSelect", "bookSelect", "chapSelect"];
+        for (let itm of itms) clearSelect(itm);
+        for (let itm of itms) showElement(itm);
+    }
+
+    function addOption(s, val, name) {
+        option = document.createElement("option");
+        option.value = val;
+        option.text = name;
+        s.add(option);
+    }
+
+    function populateVols() {
+        let s = $("#volSelect")[0];
+        console.log(s);
+        for (let key in vols) {
+            addOption(s, key, vols[key]);
+        }
+        return s;
+    }
+
+    //Called when a new volume is selected, populates book pulldown with appropriate values
+    function populateBooks() {
+        console.log("Calling populateBooks...");
+        // Turn on book select option pull down (may have been previously hidden)
+        showElement("bookSelect");
+
+        // Clear out the bookSelect pulldown
+        clearSelect("bookSelect");
+
+        // Depending on the volume chosen, add book options
+        let vol = $("#volSelect").val();
+        let bs = $("#bookSelect")[0];
+        for (b in allbooks) {
+            let r = allbooks[b];
+            if (r.vol == vol)
+                addOption(bs, r.id, r.book);
+        }
+        bs.selectedIndex = 0;
+
+        // If it is the D&C, hide book pulldown
+        console.log("Check volume: " + vol);
+        if (vol == "dc")
+            hideElement("bookSelect");
+
+        populateChaps();
+        return bs;
+    }
+
+    //Called when a new book is selected, populates chapter pulldown with appropriate values
+    function populateChaps() {
+
+        // Turn on chap select option pull down (may have been previously hidden)
+        showElement("chapSelect");
+
+        // Clear out the chapSelect options
+        clearSelect("chapSelect");
+
+        // Get newly selected volume and book
+        let id = $("#bookSelect").val();
+        let r = getBook(id);
+
+        // Depending on the book chosen, add chapter options or hide chap pulldown
+        let cs = $("#chapSelect")[0];
+        cs.selectedIndex = 0;
+
+        if (r.len == 0) {
+            hideElement("chapSelect");
+            addOption(cs, 0, "0");
+        }
+        else {
+            let chapcnt = parseInt(r.len, 10);
+            for (let i = 1; i <= chapcnt; i++)
+                addOption(cs, i, i.toString());
+        }
+        return cs;
+    }
+
+    //Called when user clicks Cancel in book selection pane
+    function jsselcancel() {
+        hideElement("selectMenu");
+    }
+
+    //Called when user clicks OK in book selection pane
+    function jsseldone() {
+        let vol = $("#volSelect").val();
+        let id = $("#bookSelect").val();
+        let chap = $("#chapSelect").val();
+
+        // Set global parameters accordingly and fetch new data
+        rec = getBook(id);
+        params.vol = rec.vol;
+        params.book = rec.book;
+        params.chap = rec.chap;
+        params.id = rec.id;
+        params.len = rec.len;
+
+        // hideElement("selectMenu");
+        // checkForNoPinyin();
+        getAndRenderData();
+    }
+
+    function checkForNoPinyin() {
+        // No pinyin exists for New Testament
+        if (params.vol == 'nt')
+            if (langs.indexOf('cmn-Latn') != -1)
+                alert("Sorry, no PinYin exists for the " + vols[params.vol]);
+    }
+
+    function getBook(id) {
+        for (let i = 0; i < allbooks.length; i++)
+            if (allbooks[i].id == id)
+                return allbooks[i];
+        alert("Internal error: getBook(" + id + ")");
+        return "";
+    }
+
+    // Create the title string for the current chapter.
+    // Then, set the title bars with that string
+    function setTitle() {
+        let tmp = params.id === 'dc' ? 'Section' : 'Chapter';
+        if (params.chap > 0)
+            $("#currentChapTitleBox").text(`${params.book} ${tmp} ${params.chap}`);
+        else
+            $("#currentChapTitleBox").text(`${params.book}`);
+    }
+
+    // Cookie handling stuff
+    // Get the cookie value for cname and return it as a string
+    function getCookie(cname) {
+        if (VERBOSE > 0)
+            console.log("getCookie: " + document.cookie);
+        let name = cname + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+        }
+        return "";
+    }
+
+    function setCookie(cname, cvalue, exdays) {
+        let d = new Date();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        let expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + "; " + expires;
+        if (VERBOSE > 0)
+            console.log("setCookie: " + document.cookie);
+    }
+
+    // Caching stuff
+    function cacheWrite(lang, id, chap, s) {
+        let key = lang + id + chap;
+        let success;
+        do {
+            success = true;
+            try {
+                window.sessionStorage.setItem(key, s);
+            } catch (error) {
+                success = false;
+                console.log(error);
+                // console.log("Cache contents:");
+                // for (let i = 0; i < window.sessionStorage.length; i++)
+                // console.log(`   ${window.sessionStorage.key(i)}`);
+                // Kick out oldest entry
+                let k = window.sessionStorage.key(0);
+                window.sessionStorage.removeItem(k);
+                console.log(`Cache remove: ${k}`);
+            }
+        } while (success == false);
+        console.log("cache write: " + key);
+        const sizeInMBytes = new Blob(Object.values(sessionStorage)).size / 1000000;
+        console.log(`Total session storage used: ${sizeInMBytes} MB`);
+        console.log(`Number of books cached: ${window.sessionStorage.length}`);
+        console.log("Done");
+    }
+
+    function cacheLookup(lang, id, chap) {
+        // This can be used to disable caching 
+        return null;
+
+        // This is how you flush the cache when it gets messed up...
+        // jsClearCache();
+
+        let key = lang + id + chap;
+        console.log("cacheLookup: " + key);
+        let s = window.sessionStorage.getItem(key);
+        if (s != null) {
+            console.log("  Found it...");
+            return (s);
+        }
+        console.log("  Didn't find it...");
+        return null;
+    }
+
+    // Page loading stuff
+    function getArrays() {
+        dat.length = 0;  // Empty out dat array
+
+        // Load data for each language desired
+        for (let i = 0; i < langs.length; i++) {
+            if (langs[i] != 'none') {
+                responseText = null;
+                let s = (cacheLookup(langs[i], params.id, params.chap));
+                if (s == null) {
+                    console.log(`loadXMLDoc: ${i} ${langs[i]} ${params.id} ${params.chap}`);
+                    loadXMLDoc(i, langs[i], params.id, params.chap);
+                    console.log(`Fetched: ${langs[i]} ${params.id} ${params.chap}`);
+                    cacheWrite(langs[i], params.id, params.chap, responseText);
+
+                }
+                else {
+                    console.log(`processReponse: ${i} ${langs[i]} ${params.id} ${params.chap}`);
+                    processResponse(i, s);
+                }
+            }
+        }
+        // Check to see if we got back data for each language
+        let cnt = 0;
+        for (l in langs)
+            if (langs[l] != 'none')
+                cnt = cnt + 1;
+        if (cnt != dat.length)
+            alert("Not all languages have this chapter available...");
+    }
+
+    function loadXMLDoc(col, lang, loc, chap) {
+        if (VERBOSE > 1)
+            console.log("loadXMLDoc: " + col + " " + lang + " " + loc + " " + chap);
+
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                processResponse(col, xmlhttp.responseText);
+            }
+        }
+        console.log("Original: " + lang);
+        xmlhttp.open("GET", `contents/${lang}/${loc}/${chap}.txt`, false);
+        xmlhttp.send();
+    }
+
+    function processResponse(col, s) {
+        let responseText = s;
+        console.log(`processResponse: col=${col}, len=${s.length}`);
+        let sa = s.split("\n");
+        // If last element is empty line, remove it
+        if (sa[sa.length - 1].length == 0)
+            sa.pop();
+        // When a book doesn't exist in a language, we get back a file with just 5 empty lines
+        // So, we check for that and don't add it to the data
+        let emptyLines = 0;
+        for (let i = 0; i < sa.length; i++) {
+            if (sa[i].trim().length == 0)
+                emptyLines = emptyLines + 1;
+        }
+        if (emptyLines >= sa.length - 1) {
+            console.log(`  processResponse: all lines empty, problem column is #${col}`);
+            sa = [];
+        }
+        dat[col] = sa;
+        console.log(`    ${dat.length}`);
+    }
+
+    //The data as retrieved is 1-3 arrays of 'n' verses each.
+    //This function turns it into 'n' arrays of 1-3 chunks each
+    //It essentially does a rotate of the 2D array of arrays
+    //This makes it easier to display in a template
+    function refactorData() {
+
+        let tmpd = [];
+        // The original code assumed dat[0] had the right length.  When it is English that is correct.
+        // But if dat[0] is pinyin and you are in the NT, dat[0].length is 0.  So, we need to find the max length of all dat[x]
+        let maxLen = 0;
+        for (let l = 0; l < dat.length; l++) {
+            if (dat[l].length > maxLen)
+                maxLen = dat[l].length;
+        }
+        for (let i = 0; i < maxLen; i++) {
+            let t = [];
+            for (let l = 0; l < dat.length; l++)
+                if (i < dat[l].length)
+                    t[l] = dat[l][i];
+                else {
+                    const langName = langNames.find(lang => lang.ldsAbbrev === langs[l]);
+                    t[l] = `<em>Text not available in ${langName.ldsFull}</em>`;
+                }
+            tmpd[i] = t;
+        }
+        console.log(`refactorData: ${tmpd.length} rows, ${tmpd[0].length} cols`);
+        return tmpd;
+    }
+
+    // This code fills in the table to make the page body
+    function renderData() {
+
+        setTitle();
+
+        // Clear out existing table rows
+        let b = $("#chapterBodyTable")[0];
+        while (b.rows.length > 0) b.deleteRow(0);
+
+        // Refactor the data
+        tmpd = refactorData();
+
+        // Render the chapter summary + verses
+        for (let i = 0; i < tmpd.length; i++) {
+            let r = b.insertRow(i);
+            if (i == 0)
+                r.classList.add('chapterHeading');
+            else
+                r.classList.add('chapterBody');
+            for (let l = 0; l < tmpd[i].length; l++) {
+                cell = b.rows[i].insertCell(l);
+                cell.innerHTML = tmpd[i][l];
+                // None of these help with Japanese
+                // cell.style.overflowWrap = 'bread-word'
+                // cell.style.wordBreak = 'break-all'
+
+                // Just this one seems to work in concert with the CSS above
+                cell.style.lineBreak = 'strict'
+            }
+        }
+    }
+
+    // This function does the work of fetching data and filling in page 
+    function getAndRenderData() {
+        getArrays();
+        renderData();
+        setCookie('mscripture', JSON.stringify(params), 14);
+    }
+
+    function fixFontSize(fs) {
+        if (fs === null)
+            fs = 0;
+
+        var w = window.innerWidth;
+        if (w < 500) minFontSize = 22;
+        else if (w < 2000) minFontSize = 30;
+        else minFontSize = 56;
+        if (fs < minFontSize)
+            params.siz = minFontSize;
+
+    }
+
+    // Called on startup to fill out the language selector menu
+    function addLangOpts(dropdown, doNone) {
+        for (let i = 0; i < langNames.length; i++) {
+            const lang = langNames[i];
+            const option1 = document.createElement('option');
+            option1.value = lang["ldsAbbrev"];
+            option1.textContent = lang["ldsFull"];
+            dropdown.appendChild(option1);
+        }
+        if (doNone) {
+            const option1 = document.createElement('option');
+            option1.value = 'none';
+            option1.textContent = 'None';
+            dropdown.appendChild(option1);
+        }
+    }
+
+    function jsClearCache() {
+        window.sessionStorage.clear();
+        console.log("Cache cleared...");
+        // alert("Cache cleared...");
+    }
+
+    function main() {  // Called after page loads
+
+        // First thing is to fill out the language selection menu
+        // The jquery: $("#opt0")[0] is equivalent to Javascript: document.getElementByID("opt0")
+        addLangOpts($("#opt0")[0], false);
+        addLangOpts($("#opt1")[0], true);
+        addLangOpts($("#opt2")[0], true);
+
+        // Parse parameters out from cookie that is stored in browser
+        // We want section starting with 'clds=...'
+        let c = getCookie('mscripture');
+        if (c != "") {
+            params = JSON.parse(c);
+            // Fix for old cookies out there (changed directory names to match Church website naming)
+            //   For debugging can set: params.lang = ["eng", "simp", "py"];  // Old sample values that need changing
+            for (i in params.lang) {
+                if (params.lang[i] === 'simp') params.lang[i] = 'zhs';
+                if (params.lang[i] === 'trad') params.lang[i] = 'zho';
+                if (params.lang[i] === 'py') params.lang[i] = 'cmn-Latn';
+            }
+        }
+
+        fixFontSize(params.siz);
+
+        // Set languages to last cookie value
+        langs = params.lang;
+
+        // Set font size to last cookie value, then resize everything to match
+        jssiz(0, params.siz);
+
+        // Clear Cache (if needed)
+        //jsClearCache();
+
+        // Fetch and load data
+        getAndRenderData();
+    }
+</script>
+
+</html>
