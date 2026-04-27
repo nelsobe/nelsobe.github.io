@@ -173,7 +173,7 @@
     <div id="navbar">
         <img class="delayed" id="treePickerOpenDialog" src="./Figures/book.png">
         <!-- <img class="delayed" src="./Figures/book.png" onclick="jssel()"> -->
-        <img class="delayed" src="Figures/lang.png" onclick="jslangs()">
+        <img class="delayed" id="langPickerOpenDialog" src="Figures/lang.png">
         <div>
             <img class="delayed" src="Figures/big.png" onclick="jssiz(2, 0)">
             <img class="delayed" src="Figures/small.png" onclick="jssiz(-2, 0)">
@@ -557,16 +557,17 @@
 
     //These are the global parameters
     let langs = ['eng', 'none', 'none']; // Initial value
-    let langNames = [
-        { "ldsFull": "English", "ldsAbbrev": "eng" },
-        { "ldsFull": "简体中文 - 普通话", "ldsAbbrev": "zhs" },
-        { "ldsFull": "繁體中文 - 國語", "ldsAbbrev": "zho" },
-        { "ldsFull": "漢語拼音", "ldsAbbrev": "cmn-Latn" },
-        { "ldsFull": "Français", "ldsAbbrev": "fra" },
-        { "ldsFull": "Español", "ldsAbbrev": "spa" },
-        { "ldsFull": "Português(Brasil)", "ldsAbbrev": "por" },
-        { "ldsFull": "Deutsch", "ldsAbbrev": "deu" },
-        { "ldsFull": "日本語", "ldsAbbrev": "jpn" },
+    const langNames = [
+        { ldsFull: "English", ldsAbbrev: "eng" },
+        { ldsFull: "简体中文 - 普通话", ldsAbbrev: "zhs" },
+        { ldsFull: "繁體中文 - 國語", ldsAbbrev: "zho" },
+        { ldsFull: "漢語拼音", ldsAbbrev: "cmn-Latn" },
+        { ldsFull: "Français", ldsAbbrev: "fra" },
+        { ldsFull: "Español", ldsAbbrev: "spa" },
+        { ldsFull: "Português(Brasil)", ldsAbbrev: "por" },
+        { ldsFull: "Deutsch", ldsAbbrev: "deu" },
+        { ldsFull: "日本語", ldsAbbrev: "jpn" },
+        { ldsFull: "none", ldsAbbrev: "none" },
     ];
 
     let rec = allbooks[0];
@@ -616,47 +617,128 @@
     }
 
     //Called when user hits 言 button
-    function jslangs() {
-        alert("1")
-        // Update language selectors with current languages and display
-        for (let i = 0; i < 3; i++)
-            $("#opt" + i).val(langs[i]);
-        // showElement("langsMenu");
-        alert("jslangs")
-    }
+    class ThreeListDialog {
+        constructor({ lang0 = [], lang1 = [], lang2 = [], defaults = {} } = {}) {
+            this.data = { lang0, lang1, lang2 };
+            this.defaults = defaults;
+
+            this.dialog = document.createElement('dialog');
+            this.dialog.innerHTML = `
+      <form method="dialog">
+        <div class="row">
+          <select name="lang0"></select>
+          <select name="lang1"></select>
+          <select name="lang2"></select>
+        </div>
+        <div class="buttons">
+          <button value="cancel">Cancel</button>
+          <button value="ok">OK</button>
+        </div>
+      </form>
+    `;
+
+            document.body.appendChild(this.dialog);
+
+            this.selects = {
+                lang0: this.dialog.querySelector('select[name="lang0"]'),
+                lang1: this.dialog.querySelector('select[name="lang1"]'),
+                lang2: this.dialog.querySelector('select[name="lang2"]')
+            };
+
+            this._populateAll();
+        }
+
+        _populate(select, items, defaultValue) {
+            select.innerHTML = '';
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                if (item === defaultValue) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        _populateAll() {
+            this._populate(this.selects.lang0, this.data.lang0, this.defaults.lang0);
+            this._populate(this.selects.lang1, this.data.lang1, this.defaults.lang1);
+            this._populate(this.selects.lang2, this.data.lang2, this.defaults.lang2);
+        }
+
+        show() {
+            return new Promise((resolve) => {
+                this.dialog.addEventListener('close', () => {
+                    if (this.dialog.returnValue === 'ok') {
+                        resolve({
+                            lang0: this.selects.lang0.value,
+                            lang1: this.selects.lang1.value,
+                            lang2: this.selects.lang2.value
+                        });
+                    } else {
+                        resolve(null);
+                    }
+                    this.destroy();
+                }, { once: true });
+
+                this.dialog.showModal();
+            });
+        }
+
+        destroy() {
+            this.dialog.remove();
+        }
+    } // End of class ThreeListDialog
 
     var langscnt = 0; // Number of languages selected
 
-    //Called when user selects OK in language selection pane
-    function jslangsOK() {
-        hideElement("langsMenu");
+    function setupThreeListDialog() {
+        const fullNames = langNames.map(lang => lang.ldsFull);
+        const fullNamesWithoutNone = fullNames.filter(name => name !== "none");
 
-        // Read selection values into variables
-        langscnt = 0;
-        for (let i = 0; i < 3; i++) {
-            langs[i] = $('#opt' + i).val();
-            if (langs[i] != 'none')
-                langscnt++;
-        }
-        if (langs[1] == 'none') {  // Move over if middle one is None
-            langs[1] = langs[2];
-            langs[2] = 'none';
-        }
-        console.log(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
-        alert(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
-        // checkForNoPinyin();
-        params.lang = langs;
-        setCookie('mscripture', JSON.stringify(params), 14);
-        alert("2")
-        getAndRenderData();
-        alert("3")
-    }
+        document.getElementById('langPickerOpenDialog').addEventListener('click', async () => {
+            const dlg = new ThreeListDialog({
+                lang0: fullNamesWithoutNone,
+                lang1: fullNames,
+                lang2: fullNames,
+                defaults: {
+                    lang0: langNames.find(lang => lang.ldsAbbrev === langs[0])?.ldsFull,
+                    lang1: langNames.find(lang => lang.ldsAbbrev === langs[1])?.ldsFull,
+                    lang2: langNames.find(lang => lang.ldsAbbrev === langs[2])?.ldsFull,
+                }
+            });
 
-    //Called when user cancels language selection pane
-    function jslangcancel() {
-        alert("jslangcancel")
-        hideElement("langsMenu");
+            const result = await dlg.show();
+
+            // if (result) {
+            //     console.log('Selected:', result);
+            //     alert(JSON.stringify(result, null, 2));
+            // } else {
+            //     console.log('User cancelled');
+            // }
+
+            if (!result) { return; }
+
+            langs[0] = langNames.find(lang => lang.ldsFull === result.lang0)?.ldsAbbrev;
+            langs[1] = langNames.find(lang => lang.ldsFull === result.lang1)?.ldsAbbrev;
+            langs[2] = langNames.find(lang => lang.ldsFull === result.lang2)?.ldsAbbrev;
+            langscnt = langs.filter(l => l !== "none").length;
+
+            if (langs[1] == 'none') {  // Move over if middle one is None
+                langs[1] = langs[2];
+                langs[2] = 'none';
+            }
+            // alert(JSON.stringify(langs, null, 2));
+            console.log(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
+            // alert(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
+            // checkForNoPinyin();
+            params.lang = langs;
+            setCookie('mscripture', JSON.stringify(params), 14);
+            // alert("2")
+            getAndRenderData();
+            // alert("3")
+        });
     }
+    setupThreeListDialog();
 
     function jsabout() {
         // Fill in values in aboutBox
