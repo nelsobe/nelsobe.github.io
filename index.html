@@ -259,20 +259,20 @@
 <script>
 
     //Variables to represent all the volumes, books, etc...
-    let vols = {
+    const vols = {
         "bom": "Book of Mormon",
         "dc": "Doctrine and Covenants",
         "pgp": "Pearl of Great Price",
         "nt": "New Testament"
     }
-    let ivols = {
+    const ivols = {
         "Book of Mormon": "bom",
         "Doctrine and Covenants": "dc",
         "Pearl of Great Price": "pgp",
         "New Testament": "nt"
     }
 
-    let allbooks = [
+    const allbooks = [
         { id: "1Ne", book: "1 Nephi", vol: "bom", v: "Book of Mormon", len: "22" },
         { id: "2Ne", book: "2 Nephi", vol: "bom", v: "Book of Mormon", len: "33" },
         { id: "Jacob", book: "Jacob", vol: "bom", v: "Book of Mormon", len: "7" },
@@ -325,8 +325,32 @@
         { id: "Rev", book: "Revelations", vol: "nt", v: "New Testament", len: "22" }
     ];
 
+    // Other variables
+    let navScaleFactor = 1.0;
+    let selScaleFactor = 0.7;
+
+    //These are the global parameters
+    let langs = ['eng', 'none', 'none']; // Initial value
 
 
+    let rec = allbooks[0];
+    let params = {
+        siz: 18,
+        vol: 'bom',
+        book: rec.book,
+        chap: 1,
+        id: rec.id,
+        len: rec.len,
+        lang: langs,
+    };
+    let VERBOSE = 1;
+    let responseText = null;
+    let dat = [0];
+    let minFontSize = 30;
+
+
+    // This class implements the tree picker dialog for selecting volume, book, and chapter.  
+    // It is designed to be reusable and can be easily adapted for other hierarchical selection tasks.
     class TreePickerDialog {
         constructor(options) {
             this.data = options.data;
@@ -507,27 +531,7 @@
     setupTreePicker();
 
 
-    let navScaleFactor = 1.0;
-    let selScaleFactor = 0.7;
 
-    //These are the global parameters
-    let langs = ['eng', 'none', 'none']; // Initial value
-
-
-    let rec = allbooks[0];
-    let params = {
-        siz: 18,
-        vol: 'bom',
-        book: rec.book,
-        chap: 1,
-        id: rec.id,
-        len: rec.len,
-        lang: langs,
-    };
-    let VERBOSE = 1;
-    let responseText = null;
-    let dat = [0];
-    let minFontSize = 30;
 
     //Miscellaneous functions
     function showElement(v) { $("#" + v).removeClass('hidden'); }
@@ -698,6 +702,7 @@
     }
     setupThreeListDialog();
 
+    // The about dialog stuff
     function jsabout() {
         // Fill in values in aboutBox
         if (params.chap > 0)
@@ -711,16 +716,8 @@
 
     }
 
-    //Called when user closes about pane
-    function jsaboutok() {
-        hideElement("aboutBox");
-        getAndRenderData();
-        if (params.book === "Jude") {
-            jsClearCache();
-            alert("Cache cleared...");
-        }
-    }
-
+    // Not called anywhere, but could be used to alert user if they select pinyin for NT, which doesn't exist.  
+    // Could also be used to disable the pinyin option in the language selector when NT is selected in the tree picker.    
     function checkForNoPinyin() {
         // No pinyin exists for New Testament
         if (params.vol == 'nt')
@@ -741,25 +738,16 @@
     // Cookie handling stuff
     // Get the cookie value for cname and return it as a string
     function getCookie(cname) {
-        if (VERBOSE > 0)
-            console.log("getCookie: " + document.cookie);
-        let name = cname + "=";
-        let ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1);
-            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
-        }
-        return "";
+        if (VERBOSE > 0) console.log("getCookie: " + document.cookie);
+        const name = cname + "=";
+        const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name));
+        return cookie ? cookie.trim().substring(name.length) : "";
     }
 
     function setCookie(cname, cvalue, exdays) {
-        let d = new Date();
-        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-        let expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-        if (VERBOSE > 0)
-            console.log("setCookie: " + document.cookie);
+        const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
+        document.cookie = `${cname}=${cvalue}; expires=${expires}`;
+        if (VERBOSE > 0) console.log(`setCookie: ${document.cookie}`);
     }
 
     // Caching stuff
