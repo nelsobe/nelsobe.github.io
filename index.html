@@ -162,6 +162,13 @@
         select {
             font-size: 0.8rem;
         }
+
+        .dialog-btn {
+            padding: 8px 20px;
+            font-size: 0.6rem;
+            margin-left: 10px;
+            cursor: pointer;
+        }
     </style>
     <!-------------------------------------------->
 </head>
@@ -246,9 +253,9 @@
                     <select id="chapterSelect"></select>
                 </label>
 
-                <div style="margin-top:15px; text-align:right;">
-                    <button value="cancel">Cancel</button>
-                    <button value="ok">OK</button>
+                <div style="margin-top:25px; text-align:center;">
+                    <button value="cancel" class="dialog-btn">Cancel</button>
+                    <button value="ok" class="dialog-btn">OK</button>
                 </div>
             </form>
         </dialog>
@@ -576,9 +583,9 @@
           <select name="lang1"></select>
           <select name="lang2"></select>
         </div>
-        <div class="buttons">
-          <button value="cancel">Cancel</button>
-          <button value="ok">OK</button>
+        <div style="margin-top:25px; text-align:center;">
+            <button value="cancel" class="dialog-btn">Cancel</button>
+            <button value="ok" class="dialog-btn">OK</button>
         </div>
       </form>
     `;
