@@ -237,22 +237,24 @@
         <dialog id="pickerDialog">
             <form method="dialog">
                 <h3>Select Passage</h3>
-
-                <label>
-                    Volume:
-                    <select id="volumeSelect"></select>
-                </label>
-
-                <label>
-                    Book:
-                    <select id="bookSelect"></select>
-                </label>
-
-                <label>
-                    Chapter:
-                    <select id="chapterSelect"></select>
-                </label>
-
+                <p>
+                    <label>
+                        Volume:
+                        <select id="volumeSelect"></select>
+                    </label>
+                </p>
+                <p>
+                    <label>
+                        Book:
+                        <select id="bookSelect"></select>
+                    </label>
+                </p>
+                <p>
+                    <label>
+                        Chapter:
+                        <select id="chapterSelect"></select>
+                    </label>
+                </p>
                 <div style="margin-top:25px; text-align:center;">
                     <button value="cancel" class="dialog-btn">Cancel</button>
                     <button value="ok" class="dialog-btn">OK</button>
@@ -527,6 +529,8 @@
             params.chap = parseInt(result.chapter);
             params.id = match.id;
             params.len = match.len;
+            setCookie('mscripture', JSON.stringify(params), 14);
+
 
             // checkForNoPinyin();
             getAndRenderData();
@@ -535,12 +539,8 @@
     }
     setupTreePicker();
 
-
-
-
     //Miscellaneous functions
     function showElement(v) { $("#" + v).removeClass('hidden'); }
-
     function hideElement(v) { $("#" + v).addClass('hidden'); }
 
     //Called to change size of scalable text on page
@@ -565,6 +565,7 @@
         if ((val == -1 && (params.chap <= 1)) || (val == 1 && (params.chap >= params.len)))
             return;
         params.chap = parseInt(params.chap) + val;
+        setCookie('mscripture', JSON.stringify(params), 14);
         getAndRenderData();
         window.scroll(0, 0);
     }
@@ -912,11 +913,8 @@
 
     // This function does the work of fetching data and filling in page 
     async function getAndRenderData() {
-        console.log("Calling getArrays()");
         await getArrays();
-        console.log("Now rendering..." + fetchedData.length);
         renderData();
-        setCookie('mscripture', JSON.stringify(params), 14);
     }
 
     function fixFontSize(fs) {
@@ -962,9 +960,6 @@
 
         // Set font size to last cookie value, then resize everything to match
         jssiz(0, params.siz);
-
-        // Clear Cache (if needed)
-        //jsClearCache();
 
         // Fetch and load data
         getAndRenderData();
