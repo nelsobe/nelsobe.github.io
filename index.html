@@ -344,7 +344,6 @@
         len: rec.len,
         lang: langs,
     };
-    let VERBOSE = 1;
     let responseText = null;
     let fetchedData = [];
     let minFontSize = 30;
@@ -502,10 +501,10 @@
         document.getElementById("treePickerOpenDialog").addEventListener("click", async () => {
             const result = await treePicker.open();
 
-            // Find the record in allbooks that matches the user's selection
-            const criteria = { v: result.volume, book: result.book };
+            // Find the record in allbooks that matches the user's selection criteria
             const match = allbooks.find(item =>
-                Object.entries(criteria).every(([key, value]) => item[key] === value)
+                Object.entries(criteria = { v: result.volume, book: result.book }).every(
+                    ([key, value]) => item[key] === value)
             );
 
             if (!match) {
@@ -675,7 +674,6 @@
 
             if (langs[1] == 'none') { langs[1] = langs[2]; langs[2] = 'none'; }
 
-            console.log(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
             // checkForNoPinyin();
             params.lang = langs;
             setCookie('mscripture', JSON.stringify(params), 14);
@@ -694,7 +692,6 @@
         $("#screenWid").text(screen.width);
         $("#screenHt").text(screen.height);
         document.getElementById('aboutDialog').showModal();
-
     }
 
     // Not called anywhere, but could be used to alert user if they select pinyin for NT, which doesn't exist.  
@@ -719,7 +716,6 @@
     // Cookie handling stuff
     // Get the cookie value for cname and return it as a string
     function getCookie(cname) {
-        if (VERBOSE > 0) console.log("getCookie: " + document.cookie);
         const name = cname + "=";
         const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name));
         return cookie ? cookie.trim().substring(name.length) : "";
@@ -728,7 +724,6 @@
     function setCookie(cname, cvalue, exdays) {
         const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
         document.cookie = `${cname}=${cvalue}; expires=${expires}`;
-        if (VERBOSE > 0) console.log(`setCookie: ${document.cookie}`);
     }
 
     // Caching stuff
@@ -810,9 +805,6 @@
     }
 
     async function loadXMLDoc(col, lang, loc, chap) {
-        if (VERBOSE > 1)
-            console.log(`loadXMLDoc: ${col} ${lang} ${loc} ${chap}`);
-
         try {
             const response = await fetch(`contents/${lang}/${loc}/${chap}.txt`);
             if (!response.ok) {
