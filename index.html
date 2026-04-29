@@ -1,5 +1,6 @@
 <!-- multiscripture - HTML, CSS, and JS all in one file.  
 	Why?  
+
 	The main reason is that PLECO's web browser (a common Chinese reading tool)
     causes problems with caching.  
 	Putting it all into one file seems to fix that.
@@ -345,7 +346,7 @@
     };
     let VERBOSE = 1;
     let responseText = null;
-    let dat = [0];
+    let fetchedData = [];
     let minFontSize = 30;
 
 
@@ -485,9 +486,7 @@
             if (b.len == "0")
                 data[b.v][b.book] = [0];
             else {
-                // alert(b.v + b.book + b.len);
                 data[b.v][b.book] = Array.from({ length: parseInt(b.len) }, (_, i) => String(i + 1));
-                // alert(data[b.v][b.book]);
             }
         });
         return data;
@@ -497,7 +496,7 @@
         const treePicker = new TreePickerDialog({
             dialogId: "pickerDialog",
             data: buildTreePickerData(),
-            storageKey: "lastSelection" // optional
+            // storageKey: "lastSelection" // optional
         });
 
         document.getElementById("treePickerOpenDialog").addEventListener("click", async () => {
@@ -653,11 +652,9 @@
 
     function setupThreeListDialog() {
         const fullNames = langNames.map(lang => lang.ldsFull);
-        const fullNamesWithoutNone = fullNames.filter(name => name !== "none");
-
         document.getElementById('langPickerOpenDialog').addEventListener('click', async () => {
             const dlg = new ThreeListDialog({
-                lang0: fullNamesWithoutNone,
+                lang0: fullNames.filter(name => name !== "None"),
                 lang1: fullNames,
                 lang2: fullNames,
                 defaults: {
@@ -668,14 +665,6 @@
             });
 
             const result = await dlg.show();
-
-            // if (result) {
-            //     console.log('Selected:', result);
-            //     alert(JSON.stringify(result, null, 2));
-            // } else {
-            //     console.log('User cancelled');
-            // }
-
             if (!result) { return; }
 
             // Convert full names back to abbreviations
@@ -684,23 +673,15 @@
             langs[2] = langNames.find(lang => lang.ldsFull === result.lang2)?.ldsAbbrev;
             langscnt = langs.filter(l => l !== "none").length;
 
-            // Move over if middle one is none
-            if (langs[1] == 'none') {
-                langs[1] = langs[2];
-                langs[2] = 'none';
-            }
-            // alert(JSON.stringify(langs, null, 2));
+            if (langs[1] == 'none') { langs[1] = langs[2]; langs[2] = 'none'; }
+
             console.log(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
-            // alert(`jslangsOK: ${langs[0]} ${langs[1]} ${langs[2]}`);
             // checkForNoPinyin();
             params.lang = langs;
             setCookie('mscripture', JSON.stringify(params), 14);
-            // alert("2")
             getAndRenderData();
-            // alert("3")
         });
     }
-    setupThreeListDialog();
 
     // The about dialog stuff
     function jsabout() {
@@ -796,8 +777,8 @@
     }
 
     // Page loading stuff
-    function getArrays() {
-        dat.length = 0;  // Empty out dat array
+    async function getArrays() {
+        fetchedData = [];  // Empty out dat array
 
         // Load data for each language desired
         for (let i = 0; i < langs.length; i++) {
@@ -806,7 +787,7 @@
                 let s = (cacheLookup(langs[i], params.id, params.chap));
                 if (s == null) {
                     console.log(`loadXMLDoc: ${i} ${langs[i]} ${params.id} ${params.chap}`);
-                    loadXMLDoc(i, langs[i], params.id, params.chap);
+                    await loadXMLDoc(i, langs[i], params.id, params.chap);
                     console.log(`Fetched: ${langs[i]} ${params.id} ${params.chap}`);
                     cacheWrite(langs[i], params.id, params.chap, responseText);
 
@@ -817,28 +798,34 @@
                 }
             }
         }
+
         // Check to see if we got back data for each language
         let cnt = 0;
         for (l in langs)
             if (langs[l] != 'none')
                 cnt = cnt + 1;
-        if (cnt != dat.length)
-            alert("Not all languages have this chapter available...");
+        if (cnt != fetchedData.length)
+            alert("Not all languages have this chapter available..." + cnt + " " + fetchedData.length);
+        console.log("Done with getArrays: " + fetchedData.length);
     }
 
-    function loadXMLDoc(col, lang, loc, chap) {
+    async function loadXMLDoc(col, lang, loc, chap) {
         if (VERBOSE > 1)
-            console.log("loadXMLDoc: " + col + " " + lang + " " + loc + " " + chap);
+            console.log(`loadXMLDoc: ${col} ${lang} ${loc} ${chap}`);
 
-        let xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                processResponse(col, xmlhttp.responseText);
+        try {
+            const response = await fetch(`contents/${lang}/${loc}/${chap}.txt`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            console.log(`Fetched ${lang} ${loc} ${chap} successfully.`);;
+            console.log(JSON.stringify(response.headers));
+            const text = await response.text();
+            console.log(JSON.stringify(text));
+            processResponse(col, text);
+        } catch (error) {
+            console.error(`Failed to fetch: ${error.message}`);
         }
-        console.log("Original: " + lang);
-        xmlhttp.open("GET", `contents/${lang}/${loc}/${chap}.txt`, false);
-        xmlhttp.send();
     }
 
     function processResponse(col, s) {
@@ -859,8 +846,10 @@
             console.log(`  processResponse: all lines empty, problem column is #${col}`);
             sa = [];
         }
-        dat[col] = sa;
-        console.log(`    ${dat.length}`);
+        fetchedData[col] = sa;
+        console.log(`    ${fetchedData.length}`);
+        for (let i = 0; i < fetchedData.length; i++)
+            console.log(`      ${i} ${fetchedData[i].length}`);
     }
 
     //The data as retrieved is 1-3 arrays of 'n' verses each.
@@ -869,51 +858,49 @@
     //This makes it easier to display in a template
     function refactorData() {
 
-        let tmpd = [];
+        let refactoredData = [];
         // The original code assumed dat[0] had the right length.  When it is English that is correct.
         // But if dat[0] is pinyin and you are in the NT, dat[0].length is 0.  So, we need to find the max length of all dat[x]
         let maxLen = 0;
-        for (let l = 0; l < dat.length; l++) {
-            if (dat[l].length > maxLen)
-                maxLen = dat[l].length;
+        for (let l = 0; l < fetchedData.length; l++) {
+            if (fetchedData[l].length > maxLen)
+                maxLen = fetchedData[l].length;
         }
         for (let i = 0; i < maxLen; i++) {
             let t = [];
-            for (let l = 0; l < dat.length; l++)
-                if (i < dat[l].length)
-                    t[l] = dat[l][i];
+            for (let l = 0; l < fetchedData.length; l++)
+                if (i < fetchedData[l].length)
+                    t[l] = fetchedData[l][i];
                 else {
                     const langName = langNames.find(lang => lang.ldsAbbrev === langs[l]);
                     t[l] = `<em>Text not available in ${langName.ldsFull}</em>`;
                 }
-            tmpd[i] = t;
+            refactoredData[i] = t;
         }
-        console.log(`refactorData: ${tmpd.length} rows, ${tmpd[0].length} cols`);
-        return tmpd;
+        return refactoredData;
     }
 
     // This code fills in the table to make the page body
     function renderData() {
-
         setTitle();
+
+        // Refactor the data
+        const tmpData = refactorData();
 
         // Clear out existing table rows
         let b = $("#chapterBodyTable")[0];
         while (b.rows.length > 0) b.deleteRow(0);
 
-        // Refactor the data
-        tmpd = refactorData();
-
         // Render the chapter summary + verses
-        for (let i = 0; i < tmpd.length; i++) {
+        for (let i = 0; i < tmpData.length; i++) {
             let r = b.insertRow(i);
             if (i == 0)
                 r.classList.add('chapterHeading');
             else
                 r.classList.add('chapterBody');
-            for (let l = 0; l < tmpd[i].length; l++) {
+            for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i].insertCell(l);
-                cell.innerHTML = tmpd[i][l];
+                cell.innerHTML = tmpData[i][l];
                 // None of these help with Japanese
                 // cell.style.overflowWrap = 'bread-word'
                 // cell.style.wordBreak = 'break-all'
@@ -925,8 +912,10 @@
     }
 
     // This function does the work of fetching data and filling in page 
-    function getAndRenderData() {
-        getArrays();
+    async function getAndRenderData() {
+        console.log("Calling getArrays()");
+        await getArrays();
+        console.log("Now rendering..." + fetchedData.length);
         renderData();
         setCookie('mscripture', JSON.stringify(params), 14);
     }
@@ -951,6 +940,7 @@
     }
 
     function main() {  // Called after page loads
+        setupThreeListDialog();
 
         // Parse parameters out from cookie that is stored in browser
         // We want section starting with 'clds=...'
