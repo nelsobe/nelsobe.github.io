@@ -191,9 +191,10 @@
             <img class="delayed" src="Figures/next.png" onclick="jsnav(1)">
         </div>
         <img class="delayed" src="Figures/question.png" onclick="jsabout()">
-        <img class="delayed" src="Figures/clearCache.png" onclick="jsClearCache()">
-
-    </div>
+        <img class="delayed" src="Figures/clearCache.png" onclick=" {
+                                          window.sessionStorage.clear();
+                                          console.log('Cache cleared...');
+                                          alert('Cache cleared...'); }">
     </div>
 
     <!-- The title section just below the navigation bar-->
@@ -234,7 +235,7 @@
         </dialog>
 
         <!-- Tree Picker Dialog HTML -->
-        <dialog id="pickerDialog">
+        <dialog style="background-color: rgb(250, 250, 250)" id="pickerDialog">
             <form method="dialog">
                 <h3>Select Passage</h3>
                 <p>
@@ -711,24 +712,6 @@
                 alert("Sorry, no PinYin exists for the " + vols[params.vol]);
     }
 
-    // Create the title string for the current chapter.
-    // Then, set the title bars with that string
-    function setTitle() {
-        let tmp = params.id === 'dc' ? 'Section' : 'Chapter';
-        if (params.chap > 0)
-            $("#currentChapTitleBox").text(`${params.book} ${tmp} ${params.chap}`);
-        else
-            $("#currentChapTitleBox").text(`${params.book}`);
-    }
-
-    // Cookie handling stuff
-    // Get the cookie value for cname and return it as a string
-    function getCookie(cname) {
-        const name = cname + "=";
-        const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name));
-        return cookie ? cookie.trim().substring(name.length) : "";
-    }
-
     function setCookie(cname, cvalue, exdays) {
         const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
         document.cookie = `${cname}=${cvalue}; expires=${expires}`;
@@ -745,9 +728,7 @@
             } catch (error) {
                 success = false;
                 console.log(error);
-                // console.log("Cache contents:");
-                // for (let i = 0; i < window.sessionStorage.length; i++)
-                // console.log(`   ${window.sessionStorage.key(i)}`);
+
                 // Kick out oldest entry
                 let k = window.sessionStorage.key(0);
                 window.sessionStorage.removeItem(k);
@@ -764,9 +745,6 @@
     function cacheLookup(lang, id, chap) {
         // This can be used to disable caching 
         return null;
-
-        // This is how you flush the cache when it gets messed up...
-        // jsClearCache();
 
         let key = lang + id + chap;
         console.log("cacheLookup: " + key);
@@ -882,10 +860,12 @@
 
     // This code fills in the table to make the page body
     function renderData() {
-        setTitle();
+        // Create the title string, then, set the title bars wbith that string
+        let tmp = params.id === 'dc' ? 'Section' : 'Chapter';
+        if (params.chap > 0) $("#currentChapTitleBox").text(`${params.book} ${tmp} ${params.chap}`);
+        else $("#currentChapTitleBox").text(`${params.book}`);
 
-        // Refactor the data
-        const tmpData = refactorData();
+        const tmpData = refactorData();          // Refactor the data
 
         // Clear out existing table rows
         let b = $("#chapterBodyTable")[0];
@@ -894,17 +874,13 @@
         // Render the chapter summary + verses
         for (let i = 0; i < tmpData.length; i++) {
             let r = b.insertRow(i);
-            if (i == 0)
-                r.classList.add('chapterHeading');
-            else
-                r.classList.add('chapterBody');
+            r.classList.add(i == 0 ? 'chapterHeading' : 'chapterBody');
             for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
-                // None of these help with Japanese
-                // cell.style.overflowWrap = 'bread-word'
-                // cell.style.wordBreak = 'break-all'
-
+                // None of these help with Japanese:
+                //     cell.style.overflowWrap = 'bread-word'
+                //     cell.style.wordBreak = 'break-all'
                 // Just this one seems to work in concert with the CSS above
                 cell.style.lineBreak = 'strict'
             }
@@ -913,56 +889,37 @@
 
     // This function does the work of fetching data and filling in page 
     async function getAndRenderData() {
-        await getArrays();
+        await getArrays();  // Must wait until arrives before rendering
         renderData();
     }
 
+    // Try to tinker with font size based on kind of display
     function fixFontSize(fs) {
         if (fs === null)
             fs = 0;
 
         var w = window.innerWidth;
-        if (w < 500) minFontSize = 22;
-        else if (w < 2000) minFontSize = 30;
-        else minFontSize = 56;
+        minFontSize = w < 500 ? 16 : w < 2000 ? 24 : 42;
         if (fs < minFontSize)
             params.siz = minFontSize;
-
-    }
-
-    function jsClearCache() {
-        window.sessionStorage.clear();
-        console.log("Cache cleared...");
-        alert("Cache cleared...");
     }
 
     function main() {  // Called after page loads
-        setupThreeListDialog();
+        setupThreeListDialog();  // Set up the language picker dialog
+        setupTreePicker();       // Set up the vol/chapter picker dialog
 
         // Parse parameters out from cookie that is stored in browser
-        // We want section starting with 'clds=...'
-        let c = getCookie('mscripture');
-        if (c != "") {
-            params = JSON.parse(c);
-            // Fix for old cookies out there (changed directory names to match Church website naming)
-            //   For debugging can set: params.lang = ["eng", "simp", "py"];  // Old sample values that need changing
-            // for (i in params.lang) {
-            //     if (params.lang[i] === 'simp') params.lang[i] = 'zhs';
-            //     if (params.lang[i] === 'trad') params.lang[i] = 'zho';
-            //     if (params.lang[i] === 'py') params.lang[i] = 'cmn-Latn';
-            // }
-        }
+        const name = "mscripture=";
+        const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name));
+        const c = cookie ? cookie.trim().substring(name.length) : "";
 
-        fixFontSize(params.siz);
+        if (c != "")
+            params = JSON.parse(c); // Parse cookie contents
 
-        // Set languages to last cookie value
-        langs = params.lang;
-
-        // Set font size to last cookie value, then resize everything to match
-        jssiz(0, params.siz);
-
-        // Fetch and load data
-        getAndRenderData();
+        langs = params.lang; // Set languages to last cookie value
+        fixFontSize(params.siz); // Try to adjust font size depending on display size
+        jssiz(0, params.siz);  // Set font size to cookie value, then resize everything
+        getAndRenderData(); // Fetch and load first screen's data
     }
 </script>
 
