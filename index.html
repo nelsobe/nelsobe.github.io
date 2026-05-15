@@ -94,6 +94,15 @@
             margin-left: 10px;
             cursor: pointer;
         }
+
+        dialog#pickerDialog {
+            background-color: rgb(250, 250, 250);
+        }
+
+        .dialog-actions {
+            margin-top: 25px;
+            text-align: center;
+        }
     </style>
     <!-------------------------------------------->
 </head>
@@ -105,7 +114,6 @@
     <!-- The fixed navigation bar at the top -->
     <div id="navbar">
         <img class="delayed" id="treePickerOpenDialog" src="./Figures/book.png">
-        <!-- <img class="delayed" src="./Figures/book.png" onclick="jssel()"> -->
         <img class="delayed" id="langPickerOpenDialog" src="Figures/lang.png">
         <div>
             <img class="delayed" src="Figures/big.png" onclick="jssiz(2, 0)">
@@ -160,7 +168,7 @@
         </dialog>
 
         <!-- Tree Picker Dialog HTML -->
-        <dialog style="background-color: rgb(250, 250, 250)" id="pickerDialog">
+        <dialog id="pickerDialog">
             <form method="dialog">
                 <h3>Select Passage</h3>
                 <p>
@@ -181,7 +189,7 @@
                         <select id="chapterSelect"></select>
                     </label>
                 </p>
-                <div style="margin-top:25px; text-align:center;">
+                <div class="dialog-actions">
                     <button value="cancel" class="dialog-btn">Cancel</button>
                     <button value="ok" class="dialog-btn">OK</button>
                 </div>
@@ -510,7 +518,7 @@
           <select name="lang1"></select>
           <select name="lang2"></select>
         </div>
-        <div style="margin-top:25px; text-align:center;">
+        <div class="dialog-actions">
             <button value="cancel" class="dialog-btn">Cancel</button>
             <button value="ok" class="dialog-btn">OK</button>
         </div>
