@@ -15,17 +15,12 @@
     <!-------------------------------------------->
     <!-- THe CSS stuff -->
     <style>
-        /* The body tag */
         body {
             margin: 0.2rem;
         }
 
-        /* All the navbar stuff */
         #navbar {
-            /*overflow: hidden; */
             background-color: #a0d0ff;
-            /* color: white; */
-            /* Text color */
             position: fixed;
             top: 0;
             left: 0;
@@ -41,131 +36,61 @@
             margin-top: 0.4rem;
         }
 
-        /* Interesting way to highlight the menu icons up top by inverting them */
         #navbar img:active {
             filter: invert(100%);
         }
 
         .delayed {
-            transition: all 0.1s;
-            transition-delay: 50ms;
+            transition: all 0.1s 50ms;
         }
 
         .delayed:active {
             transition: none;
         }
 
-        /* @media (hover: hover) {
-            #navbar img:hover {
-                filter: invert(100%);
-            }
-        } */
-
-        /* The title stuff just below the nav bar */
         #titleBox {
             color: black;
             text-align: center;
             font-weight: bold;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             padding-top: 2.5rem;
         }
 
-        /* This gets the table looking correct, even with Japanese */
         #chapterBodyTable {
             table-layout: fixed;
             width: 100%;
             border-collapse: collapse;
         }
 
-        /*  First row of chapter contents table*/
         .chapterHeading {
             background: #d1edff;
-            /* #D1EDF9 is good alternative */
         }
 
-        /* The verses table (heading and body) */
         .verses {
-            /* padding:26px; */
             border-spacing: 0.3rem;
-            /* width:100%; */
         }
 
-        /* The individual verses */
         .verses td {
             vertical-align: top;
-            /* This next one is needed, but why 30% */
             width: 30%;
-            /* word-wrap: break-word; */
-            padding-right: 0px;
-            padding-left: 10px;
-            padding-top: 15px;
-            padding-bottom: 15px;
-            /* Applies 10 pixels of padding on all four sides */
+            padding: 15px 10px;
         }
 
         .verses td span {
             display: inline-block;
         }
 
-        /* The popup menus (language select, chapter select, about box) */
-        .optionsMenu {
-            border-style: none;
-            border-width: 10px;
-            position: fixed;
-            top: 0px;
-            left: 0px;
-            padding: 20px;
-        }
-
-        /* Book selection menu */
-        #selectMenu {
-            background: rgb(207, 245, 207);
-            /* display:none; */
-        }
-
-        /* Language selection menu */
-        #langsMenu {
-            background: rgb(159, 218, 237);
-            ;
-            /* display:none; */
-        }
-
-        /* The about box and histPercent selection */
-        #aboutBox {
-            background: rgb(259, 218, 237);
-            ;
-            text-align: center;
-            position: fixed;
-            top: 0px;
-            left: 0px;
-            padding: 20px;
-            font-size: 0.8rem;
-        }
-
-        #aboutBox #histp {
-            font-size: 0.7rem;
-        }
-
-        .hidden {
-            display: none;
-        }
-
         .textLeft {
             text-align: left;
         }
 
-        .popup button {
-            font-size: 0.8rem;
-            border-radius: 10%;
-        }
-
-        select {
+        select,
+        .dialog-btn {
             font-size: 0.8rem;
         }
 
         .dialog-btn {
             padding: 8px 20px;
-            font-size: 0.6rem;
             margin-left: 10px;
             cursor: pointer;
         }
