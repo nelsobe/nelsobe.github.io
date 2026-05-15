@@ -36,7 +36,16 @@
             margin-top: 0.4rem;
         }
 
-        #navbar img:active {
+        #navbar button {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        #navbar img:active,
+        #navbar button:active img {
             filter: invert(100%);
         }
 
@@ -112,89 +121,101 @@
 <body onload="main()">
 
     <!-- The fixed navigation bar at the top -->
-    <div id="navbar">
-        <img class="delayed" id="treePickerOpenDialog" src="./Figures/book.png">
-        <img class="delayed" id="langPickerOpenDialog" src="Figures/lang.png">
+    <nav id="navbar" aria-label="Top navigation">
+        <button id="treePickerOpenDialog" class="nav-button delayed" aria-label="Select passage">
+            <img src="./Figures/book.png" alt="Select passage">
+        </button>
+        <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
+            <img src="Figures/lang.png" alt="Choose languages">
+        </button>
         <div>
-            <img class="delayed" src="Figures/big.png" onclick="jssiz(2, 0)">
-            <img class="delayed" src="Figures/small.png" onclick="jssiz(-2, 0)">
+            <button class="nav-button delayed" aria-label="Increase text size" onclick="jssiz(2, 0)">
+                <img src="Figures/big.png" alt="Increase text size">
+            </button>
+            <button class="nav-button delayed" aria-label="Decrease text size" onclick="jssiz(-2, 0)">
+                <img src="Figures/small.png" alt="Decrease text size">
+            </button>
         </div>
         <div>
-            <img class="delayed" src="Figures/prev.png" onclick="jsnav(-1)">
-            <img class="delayed" src="Figures/next.png" onclick="jsnav(1)">
+            <button class="nav-button delayed" aria-label="Previous passage" onclick="jsnav(-1)">
+                <img src="Figures/prev.png" alt="Previous passage">
+            </button>
+            <button class="nav-button delayed" aria-label="Next passage" onclick="jsnav(1)">
+                <img src="Figures/next.png" alt="Next passage">
+            </button>
         </div>
-        <img class="delayed" src="Figures/question.png" onclick="jsabout()">
-        <img class="delayed" src="Figures/clearCache.png" onclick=" {
-                                          window.sessionStorage.clear();
-                                          console.log('Cache cleared...');
-                                          alert('Cache cleared...'); }">
-    </div>
+        <button class="nav-button delayed" aria-label="About this app" onclick="jsabout()">
+            <img src="Figures/question.png" alt="About this app">
+        </button>
+        <button class="nav-button delayed" aria-label="Clear cache"
+            onclick="window.sessionStorage.clear(); console.log('Cache cleared...'); alert('Cache cleared...');">
+            <img src="Figures/clearCache.png" alt="Clear cache">
+        </button>
+    </nav>
 
     <!-- The title section just below the navigation bar-->
-    <div id='titleBox'>
-        Multi-column Scriptures<br>
+    <header id='titleBox'>
+        <h1>Multi-column Scriptures</h1>
         <p id='currentChapTitleBox'>Loading initial data...</p>
-    </div>
+    </header>
 
     <!-- The main page -->
-    <div>
+    <main>
+        <table id='chapterBodyTable' class='verses'></table>
+    </main>
 
-        <div id='chapterBody'>
-            <table id='chapterBodyTable' class='verses'></table>
-        </div>
-
-        <!-- The about pop up -->
-        <dialog id="aboutDialog">
-            <form method="dialog">
-                <p>
-                    <b>Multi-column Scriptures</b><br>
-                    Brent Nelson, November 13, 2025<br>
-                    For Personal Use Only<br>
-                    Not endorsed by or affiliated with <br>
-                    The Church of Jesus Christ <br>
-                    of Latter Day Saints<br>
-                    or<br>Brigham Young University
+    <!-- The about pop up -->
+    <dialog id="aboutDialog">
+        <form method="dialog">
+            <p>
+                <b>Multi-column Scriptures</b><br>
+                Brent Nelson, November 13, 2025<br>
+                For Personal Use Only<br>
+                Not endorsed by or affiliated with <br>
+                The Church of Jesus Christ <br>
+                of Latter Day Saints<br>
+                or<br>Brigham Young University
+            </p>
+            <div class="textLeft">
+                <p id="aboutChap">Chap goes here</p>
+                <p>Text size = <span id="textSize"></span>px,
+                    Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
+                <p>Not all volumes are available in all languages, <br>
+                    &nbsp; &nbsp; e.g. only parts of Chinese New Testament.
                 </p>
-                <div class="textLeft">
-                    <p id="aboutChap">Chap goes here</p>
-                    <p>Text size = <span id="textSize"></span>px,
-                        Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
-                    <p>Not all volumes are available in all languages, <br>
-                        &nbsp; &nbsp; e.g. only parts of Chinese New Testament.
-                    </p>
-                </div>
+            </div>
+            <button value="ok" class="dialog-btn">OK</button>
+        </form>
+    </dialog>
+
+    <!-- Tree Picker Dialog HTML -->
+    <dialog id="pickerDialog">
+        <form method="dialog">
+            <h3>Select Passage</h3>
+            <p>
+                <label>
+                    Volume:
+                    <select id="volumeSelect"></select>
+                </label>
+            </p>
+            <p>
+                <label>
+                    Book:
+                    <select id="bookSelect"></select>
+                </label>
+            </p>
+            <p>
+                <label>
+                    Chapter:
+                    <select id="chapterSelect"></select>
+                </label>
+            </p>
+            <div class="dialog-actions">
+                <button value="cancel" class="dialog-btn">Cancel</button>
                 <button value="ok" class="dialog-btn">OK</button>
-            </form>
-        </dialog>
-
-        <!-- Tree Picker Dialog HTML -->
-        <dialog id="pickerDialog">
-            <form method="dialog">
-                <h3>Select Passage</h3>
-                <p>
-                    <label>
-                        Volume:
-                        <select id="volumeSelect"></select>
-                    </label>
-                </p>
-                <p>
-                    <label>
-                        Book:
-                        <select id="bookSelect"></select>
-                    </label>
-                </p>
-                <p>
-                    <label>
-                        Chapter:
-                        <select id="chapterSelect"></select>
-                    </label>
-                </p>
-                <div class="dialog-actions">
-                    <button value="cancel" class="dialog-btn">Cancel</button>
-                    <button value="ok" class="dialog-btn">OK</button>
-                </div>
-            </form>
-        </dialog>
+            </div>
+        </form>
+    </dialog>
 
 </body>
 
@@ -807,7 +828,7 @@
         // Render the chapter summary + verses
         for (let i = 0; i < tmpData.length; i++) {
             let r = b.insertRow(i);
-            r.classList.add(i == 0 ? 'chapterHeading' : 'chapterBody');
+            if (i == 0) r.classList.add('chapterHeading');
             for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
