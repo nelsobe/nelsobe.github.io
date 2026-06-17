@@ -224,17 +224,20 @@
 <script>
 
     //Variables to represent all the volumes, books, etc...
-    const vols = {
+    const volumes = {
         "bom": "Book of Mormon",
         "dc": "Doctrine and Covenants",
         "pgp": "Pearl of Great Price",
         "nt": "New Testament"
+    };
+
+    // Helper functions for bidirectional volume lookups
+    function getVolumeCode(volumeName) {
+        return Object.entries(volumes).find(([, name]) => name === volumeName)?.[0];
     }
-    const ivols = {
-        "Book of Mormon": "bom",
-        "Doctrine and Covenants": "dc",
-        "Pearl of Great Price": "pgp",
-        "New Testament": "nt"
+
+    function getVolumeName(volumeCode) {
+        return volumes[volumeCode];
     }
 
     const allbooks = [
@@ -479,7 +482,7 @@
                 return;
             }
 
-            params.vol = ivols[result.volume];
+            params.vol = getVolumeCode(result.volume);
             params.book = result.book;
             params.chap = parseInt(result.chapter);
             params.id = match.id;
@@ -610,6 +613,7 @@
         { ldsFull: "Deutsch", ldsAbbrev: "deu" },
         { ldsFull: "日本語", ldsAbbrev: "jpn" },
         { "ldsFull": "Reo Tahiti", "ldsAbbrev": "tah" },
+        { "ldsFull": "Hiligaynon", "ldsAbbrev": "hil" },
         { ldsFull: "None", ldsAbbrev: "none" },
     ];
 
@@ -664,7 +668,7 @@
         // No pinyin exists for New Testament
         if (params.vol == 'nt')
             if (langs.indexOf('cmn-Latn') != -1)
-                alert("Sorry, no PinYin exists for the " + vols[params.vol]);
+                alert("Sorry, no PinYin exists for the " + getVolumeName(params.vol));
     }
 
     function setCookie(cname, cvalue, exdays) {
