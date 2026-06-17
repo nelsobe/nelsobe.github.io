@@ -1,2 +1,2 @@
 # nelsobe.github.io
-Place for multiscriptures.
+My reading place
