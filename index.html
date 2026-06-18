@@ -62,7 +62,16 @@
             text-align: center;
             font-weight: bold;
             font-family: Arial, sans-serif;
-            padding-top: 2.5rem;
+            padding-top: 2.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #titleBox h1 {
+            margin: 0.2rem 0;
+        }
+
+        #titleBox p {
+            margin: 0.2rem 0;
         }
 
         #chapterBodyTable {
@@ -837,12 +846,24 @@
         let b = $("#chapterBodyTable")[0];
         while (b.rows.length > 0) b.deleteRow(0);
 
+        // Add language header row (black and white, no styling)
+        let langHeaderRow = b.insertRow(0);
+        for (let l = 0; l < langs.length; l++) {
+            if (langs[l] !== 'none') {
+                const langName = langNames.find(lang => lang.ldsAbbrev === langs[l])?.ldsFull || langs[l];
+                const headerCell = langHeaderRow.insertCell(l);
+                headerCell.innerHTML = langName;
+                headerCell.style.textAlign = 'center';
+                headerCell.style.fontWeight = 'bold';
+            }
+        }
+
         // Render the chapter summary + verses
         for (let i = 0; i < tmpData.length; i++) {
-            let r = b.insertRow(i);
+            let r = b.insertRow(i + 1);
             if (i == 0) r.classList.add('chapterHeading');
             for (let l = 0; l < tmpData[i].length; l++) {
-                cell = b.rows[i].insertCell(l);
+                cell = b.rows[i + 1].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
                 // None of these help with Japanese:
                 //     cell.style.overflowWrap = 'bread-word'
