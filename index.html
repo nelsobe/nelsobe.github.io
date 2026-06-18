@@ -419,11 +419,11 @@
             };
         }
 
-        open() {
+        open(initialSelection = null) {
             return new Promise(resolve => {
                 this._populateVolumes();
 
-                const saved = this._loadSaved();
+                const saved = initialSelection || this._loadSaved();
                 this._applySelection(saved);
 
                 this.dialog.showModal();
@@ -466,7 +466,11 @@
         });
 
         document.getElementById("treePickerOpenDialog").addEventListener("click", async () => {
-            const result = await treePicker.open();
+            const result = await treePicker.open({
+                volume: getVolumeName(params.vol),
+                book: params.book,
+                chapter: String(params.chap)
+            });
 
             // Find the record in allbooks that matches the user's selection criteria
             const match = allbooks.find(item =>
@@ -867,9 +871,6 @@
     }
 
     function main() {  // Called after page loads
-        setupThreeListDialog();  // Set up the language picker dialog
-        setupTreePicker();       // Set up the vol/chapter picker dialog
-
         // Parse parameters out from cookie that is stored in browser
         const name = "mscripture=";
         const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name));
@@ -877,6 +878,9 @@
 
         if (c != "")
             params = JSON.parse(c); // Parse cookie contents
+
+        setupThreeListDialog();  // Set up the language picker dialog
+        setupTreePicker();       // Set up the vol/chapter picker dialog
 
         langs = params.lang; // Set languages to last cookie value
         fixFontSize(params.siz); // Try to adjust font size depending on display size
