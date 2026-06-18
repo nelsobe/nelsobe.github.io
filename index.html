@@ -167,7 +167,7 @@
     <!-- The about pop up -->
     <dialog id="aboutDialog">
         <form method="dialog">
-            <p>
+            <p style="text-align: center;">
                 <b>Multi-column Scriptures</b><br>
                 Brent Nelson, November 13, 2025<br>
                 For Personal Use Only<br>
@@ -822,7 +822,7 @@
     function renderData() {
         // Create the title string, then, set the title bars wbith that string
         let tmp = params.id === 'dc' ? 'Section' : 'Chapter';
-        if (params.chap > 0) $("#currentChapTitleBox").text(`${params.book} ${tmp} ${params.chap}`);
+        if (params.chap > 0) $("#currentChapTitleBox").text(`${params.book} ${params.chap}`);
         else $("#currentChapTitleBox").text(`${params.book}`);
 
         const tmpData = refactorData();          // Refactor the data
