@@ -39,9 +39,22 @@
         #navbar button {
             background: none;
             border: none;
-            padding: 0;
+            padding: 0.15rem 0.4rem;
             margin: 0;
             cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        #navbar button.nav-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #navbar button.nav-button span {
+            display: inline-block;
+            line-height: 1;
         }
 
         #navbar img:active,
@@ -99,6 +112,16 @@
             display: inline-block;
         }
 
+        #chapterBodyTable tr.clickableRow {
+            cursor: pointer;
+        }
+
+        #chapterBodyTable td.speech-start-cell {
+            background-color: transparent;
+            box-shadow: inset 0 0 0 3px rgba(255, 183, 77, 0.95);
+            transition: box-shadow 120ms ease-in-out;
+        }
+
         .textLeft {
             text-align: left;
         }
@@ -122,6 +145,154 @@
             margin-top: 25px;
             text-align: center;
         }
+
+        #navbar select.speech-column-select,
+        #navbar select.speech-voice-select {
+            font-size: 0.9rem;
+            margin: 0 0.3rem;
+            min-width: 8rem;
+        }
+
+        #navbar .speech-controls {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+        }
+
+        #navbar .speech-speed-indicator {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.2rem;
+            padding: 0.15rem 0.45rem;
+            background: rgba(0, 0, 0, 0.78);
+            color: white;
+            border-radius: 0.35rem;
+            font-size: 0.9rem;
+            line-height: 1;
+            white-space: nowrap;
+            display: none;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #speechSpeedDialog {
+            position: absolute;
+            top: calc(100% + 0.3rem);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.92);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.4rem;
+            display: none;
+            min-width: 10rem;
+            z-index: 25;
+            box-shadow: 0 0 16px rgba(0, 0, 0, 0.35);
+        }
+
+        #speechSpeedDialog {
+            display: none;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        #speechSpeedDialog label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.9rem;
+        }
+
+        #speechSpeedDialog input[type="range"] {
+            width: 12rem;
+            accent-color: #ffffff;
+        }
+
+        #speechSpeedDialog .speed-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        #speechSpeedDialog .speed-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        #speechSpeedDialog button {
+            flex: 1;
+            min-width: 0;
+            padding: 0.45rem 0.6rem;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 0.35rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        #speechSpeedDialog button:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        dialog#aboutDialog {
+            width: min(40rem, 95vw);
+            max-height: 80vh;
+            padding: 1rem 1.2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        dialog#aboutDialog .dialog-content {
+            max-height: calc(80vh - 6rem);
+            overflow-y: auto;
+            text-align: left;
+            padding-right: 0.4rem;
+        }
+
+        dialog#aboutDialog .dialog-content h2 {
+            margin-top: 1rem;
+            margin-bottom: 0.35rem;
+            font-size: 1.05rem;
+        }
+
+        dialog#aboutDialog .dialog-content p,
+        dialog#aboutDialog .dialog-content li {
+            margin: 0.35rem 0;
+            line-height: 1.4;
+        }
+
+        dialog#aboutDialog ul {
+            padding-left: 1.1rem;
+            margin: 0.35rem 0 0.8rem;
+        }
+
+        dialog#aboutDialog button.dialog-btn {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
+            font-size: 1rem;
+            margin-top: 0.8rem;
+        }
+
+        #navbar .svg-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+
+        /* Speech button state colors */
+        #toggleSpeechButton.speech-paused {
+            color: #e52b2b;
+        }
+
+        #toggleSpeechButton.speech-stopped {
+            color: #000;
+        }
     </style>
     <!-------------------------------------------->
 </head>
@@ -138,6 +309,24 @@
         <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
             <img src="Figures/lang.png" alt="Choose languages">
         </button>
+        <div class="speech-controls">
+            <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
+                <option disabled selected>Loading voices...</option>
+            </select>
+            <button id="toggleSpeechButton" class="nav-button delayed speech-button" aria-label="Play speech"
+                onclick="toggleSpeech()">
+                <span id="toggleSpeechIcon" class="svg-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+                        fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4v16l12-8L4 4z" />
+                    </svg></span>
+            </button>
+            <button id="stopSpeechButton" class="nav-button delayed speech-button" aria-label="Stop speech"
+                onclick="stopSpeech()">
+                <span aria-hidden="true">⏹</span>
+            </button>
+            <div id="speechSpeedIndicator" class="speech-speed-indicator" aria-live="polite">1.00×</div>
+            <div id="speechSpeedDialog" class="speech-speed-dialog" aria-hidden="true"></div>
+        </div>
         <div>
             <button class="nav-button delayed" aria-label="Increase text size" onclick="jssiz(2, 0)">
                 <img src="Figures/big.png" alt="Increase text size">
@@ -174,27 +363,89 @@
         <table id='chapterBodyTable' class='verses'></table>
     </main>
 
-    <!-- The about pop up -->
+    <!-- The help pop up -->
     <dialog id="aboutDialog">
         <form method="dialog">
-            <p style="text-align: center;">
-                <b>Multi-column Scriptures</b><br>
-                Brent Nelson, June 17, 2026<br>
-                For Personal Use Only<br>
-                Not endorsed by or affiliated with <br>
-                The Church of Jesus Christ <br>
-                of Latter Day Saints<br>
-                or<br>Brigham Young University
-            </p>
-            <div class="textLeft">
-                <p id="aboutChap">Chap goes here</p>
-                <p>Text size = <span id="textSize"></span>px,
-                    Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
-                <p>Not all volumes are available in all languages, <br>
-                    &nbsp; &nbsp; e.g. Book of Mormon only for 漢語拼音.
+            <div class="dialog-content">
+                <p style="text-align: center; font-weight: bold; margin-bottom: 0.75rem;">
+                    Multi-column Scriptures<br>
+                    Brent Nelson, June 17, 2026
                 </p>
+
+                <section>
+                    <h2>1.0 The Navigation Bar</h2>
+                    <p>
+                        The icons across the top of the screen provide quick access to common functions such as
+                        book/chapter navigation, languages selection, text size adjustment, and speech controls.
+                        Experiment with them to find the best way to use them for your needs.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>2.0 Using the Text-to-Speech Reader</h2>
+                    <p>
+                        Tap any verse in the language desired to choose the starting location for speech playback.
+                        The highlighted verse is where reading will begin.
+                    </p>
+                    <ul>
+                        <li>Press the play button to start or pause narration.</li>
+                        <li>Use the stop button to cancel playback immediately.</li>
+                        <li>Choose a voice with the selector when available.</li>
+                        <li> You can also double-click a verse to start playback from that point.</li>
+                        <li>Finally, hitting the ESC key will stop the current playback.</li>
+                    </ul>
+                    <h2>2.1 Speech speed</h2>
+                    <p>
+                        Long-press the play button to open a speed selector. If narration was already playing, it
+                        will pause while you choose a speed and resume after selection.
+                    </p>
+                    <p>
+                        If playback was not active, selecting a speed will not start speech but the newly selected
+                        speed will be used for the next playback session.
+                    </p>
+                    <h2>2.2 Voice selection</h2>
+                    <p>
+                        The speech voice list is filtered by language. If no voice is available, the selector is
+                        disabled and playback cannot start for that language.
+                    </p>
+                    <p>
+                        The voices supported are those available in the browser's speech synthesis API. Thus each
+                        browser (Chrome, Firefox, Safari, etc.) exposes a different set of voices, and availability
+                        may also vary across operating systems.
+                    </p>
+                    <p>
+                        Some languages may have multiple voices available while others may have none. If a voice
+                        you expect is missing, it is likely due to browser or OS limitations for that language.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>3.0 Scripture Availability</h2>
+                    <p>
+                        Not all volumes are available in all languages. For example, the Old Testament may not be
+                        available in certain languages, and the New Testament is also missing for some languages.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>4.0 Language Availability</h2>
+                    <p>
+                        The languages provided reflect community interest. Additional languages can be added if
+                        there is demand — let me know which language you would like included.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>5.0 Other Info</h2>
+                </section>
+
+                <div class="textLeft">
+                    <p>Text size = <span id="textSize"></span>px</p>
+                    <p>Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
+                    <p id="aboutChap">Current location information appears here.</p>
+                </div>
             </div>
-            <button value="ok" class="dialog-btn">OK</button>
+            <button value="ok" class="dialog-btn">Close</button>
         </form>
     </dialog>
 
@@ -688,6 +939,548 @@
                 alert("Sorry, no PinYin exists for the " + getVolumeName(params.vol));
     }
 
+    let currentSpeechColumn = null;
+    let availableSpeechVoices = [];
+    let speechVoiceAvailable = true;
+    let speechActive = false;
+    let speechPaused = false;
+    let speechStartRow = 1;
+    let speechStartColumn = 0;
+    let currentSpeechRow = null;
+    let speechRate = 1.0;
+    const speechRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+    let speechSpeedLabelTimer = null;
+    let speechButtonPressTimer = null;
+    let speechLongPressTriggered = false;
+    let speechWasPlayingBeforeSpeedSelection = false;
+    let ignoreNextSpeechToggleClick = false;
+
+    function saveVoiceForLang(langAbbrev, voiceURI) {
+        try {
+            const map = JSON.parse(localStorage.getItem('speechVoiceByLang') || '{}');
+            map[langAbbrev] = voiceURI;
+            localStorage.setItem('speechVoiceByLang', JSON.stringify(map));
+        } catch (e) { console.warn('Could not save voice mapping', e); }
+    }
+
+    function getSavedVoiceForLang(langAbbrev) {
+        try {
+            const map = JSON.parse(localStorage.getItem('speechVoiceByLang') || '{}');
+            return map[langAbbrev] || null;
+        } catch (e) { return null; }
+    }
+
+    function highlightSpeechCell(rowIndex) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return;
+
+        const previousStartCell = table.querySelector('td.speech-start-cell');
+        if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
+
+        const row = table.rows[rowIndex];
+        if (!row) return;
+
+        const cell = row.cells[speechStartColumn];
+        if (cell) {
+            cell.classList.add('speech-start-cell');
+            speechStartRow = rowIndex;
+            // Ensure the active cell is visible near the top of the viewport (below the navbar)
+            const nav = document.getElementById('navbar');
+            const navHeight = nav ? nav.offsetHeight : 0;
+            const rect = cell.getBoundingClientRect();
+            const isVisible = (rect.top >= navHeight) && (rect.bottom <= window.innerHeight);
+            if (!isVisible) {
+                const targetY = window.scrollY + rect.top - navHeight - 8;
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+        }
+    }
+
+    function setSpeechStartCell(rowIndex, colIndex) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return;
+
+        const maxRow = table.rows.length - 1;
+        const maxCol = table.rows[1] ? table.rows[1].cells.length - 1 : 0;
+        if (maxRow < 1) return;
+        if (rowIndex < 1) rowIndex = 1;
+        if (rowIndex > maxRow) rowIndex = maxRow;
+        if (colIndex < 0) colIndex = 0;
+        if (colIndex > maxCol) colIndex = maxCol;
+
+        const previousStartCell = table.querySelector('td.speech-start-cell');
+        if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
+
+        const row = table.rows[rowIndex];
+        const cell = row ? row.cells[colIndex] : null;
+        if (row) {
+            speechStartRow = rowIndex;
+        }
+        if (cell) {
+            cell.classList.add('speech-start-cell');
+            speechStartColumn = colIndex;
+        }
+
+        populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+    }
+
+    function getSpeechLangPrefixForColumn(col) {
+        const lang = langs[col] || 'eng';
+        switch (lang) {
+            case 'eng': return 'en';
+            case 'zhs':
+            case 'zho':
+            case 'cmn-Latn': return 'zh';
+            case 'dan': return 'da';
+            case 'deu': return 'de';
+            case 'spa': return 'es';
+            case 'fra': return 'fr';
+            case 'hil': return '';
+            case 'isl': return 'is';
+            case 'nor': return 'no';
+            case 'jpn': return 'ja';
+            case 'por': return 'pt';
+            case 'tah': return 'ty';
+            default: return '';
+        }
+    }
+
+    function populateSpeechVoiceOptions(languagePrefix = '', langAbbrev = '') {
+        const select = document.getElementById('speechVoiceSelect');
+        if (!select || !('speechSynthesis' in window)) return;
+
+        availableSpeechVoices = window.speechSynthesis.getVoices();
+        if (!availableSpeechVoices.length) return;
+
+        let filteredVoices = languagePrefix
+            ? availableSpeechVoices.filter(voice => voice.lang.toLowerCase().startsWith(languagePrefix.toLowerCase()))
+            : [];
+
+        if (languagePrefix && languagePrefix.toLowerCase() === 'en') {
+            const nonUSVoices = filteredVoices.filter(voice => voice.lang.toLowerCase() !== 'en-us');
+            const samanthaVoices = filteredVoices.filter(voice => voice.lang.toLowerCase() === 'en-us' && voice.name.toLowerCase() === 'samantha');
+            filteredVoices = samanthaVoices.concat(nonUSVoices);
+        }
+
+        select.innerHTML = '';
+        select.disabled = false;
+
+        if (filteredVoices.length > 0) {
+            speechVoiceAvailable = true;
+            const savedVoiceURI = langAbbrev ? getSavedVoiceForLang(langAbbrev) : localStorage.getItem('speechVoiceURI');
+            const previousValue = select.value;
+
+            filteredVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                select.appendChild(option);
+            });
+
+            if (savedVoiceURI && Array.from(select.options).some(opt => opt.value === savedVoiceURI)) {
+                select.value = savedVoiceURI;
+            } else if (previousValue && Array.from(select.options).some(opt => opt.value === previousValue)) {
+                select.value = previousValue;
+            } else if (select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
+        } else {
+            speechVoiceAvailable = false;
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.selected = true;
+            option.textContent = 'No voice available';
+            select.appendChild(option);
+            select.disabled = true;
+        }
+    }
+
+    function getSelectedSpeechVoice() {
+        const select = document.getElementById('speechVoiceSelect');
+        if (!select || !availableSpeechVoices.length) return null;
+
+        const voiceURI = select.value;
+        return availableSpeechVoices.find(voice => voice.voiceURI === voiceURI) || null;
+    }
+
+    function getSpeechLangForColumn(col) {
+        const lang = langs[col] || 'eng';
+        const mapping = {
+            eng: 'en-US',
+            zhs: 'zh-CN',
+            zho: 'zh-TW',
+            'cmn-Latn': 'zh-CN',
+            dan: 'da-DK',
+            deu: 'de-DE',
+            spa: 'es-ES',
+            fra: 'fr-FR',
+            hil: 'en-US',
+            isl: 'is-IS',
+            nor: 'no-NO',
+            jpn: 'ja-JP',
+            por: 'pt-BR',
+            tah: 'ty-TO'
+        };
+        return mapping[lang] || 'en-US';
+    }
+
+    function getColumnText(col, startRow = speechStartRow) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return '';
+
+        let text = '';
+        for (let rowIndex = startRow; rowIndex < table.rows.length; rowIndex++) {
+            const cell = table.rows[rowIndex].cells[col];
+            if (cell) {
+                const cellText = cell.textContent.trim();
+                if (cellText.length > 0)
+                    text += cellText + '\n';
+            }
+        }
+        return text.trim();
+    }
+
+    function speakColumn(col, startRow = speechStartRow) {
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported in this browser.');
+            return;
+        }
+
+        speechStartRow = startRow;
+        const text = getColumnText(col, startRow);
+        if (!text) {
+            alert('No text found for that column.');
+            return;
+        }
+
+        stopSpeech();
+        currentSpeechColumn = col;
+
+        // Ensure the voice selector is populated for the language of the requested column
+        const langAbbrev = langs[col] || 'eng';
+        const langPrefix = getSpeechLangPrefixForColumn(col);
+        populateSpeechVoiceOptions(langPrefix, langAbbrev);
+
+        // If populate determined no available voice for this language, refuse to start
+        if (!speechVoiceAvailable) {
+            alert('No speech voice available for this language. Playback cannot start.');
+            return;
+        }
+
+        // Prefer the currently selected voice but ensure it matches the requested language.
+        // If it doesn't match, try to pick a voice that does. Do not use an English voice
+        // (e.g., Samantha) to read non-English text.
+        const expectedPrefix = (langPrefix || '').toLowerCase();
+        let selectedVoice = getSelectedSpeechVoice();
+        if (selectedVoice && expectedPrefix && !selectedVoice.lang.toLowerCase().startsWith(expectedPrefix)) {
+            // find a compatible voice
+            const match = availableSpeechVoices.find(v => expectedPrefix && v.lang.toLowerCase().startsWith(expectedPrefix));
+            if (match) {
+                selectedVoice = match;
+                // update selector to reflect the programmatic choice
+                const select = document.getElementById('speechVoiceSelect');
+                if (select) {
+                    const opt = Array.from(select.options).find(o => o.value === match.voiceURI);
+                    if (opt) select.value = match.voiceURI;
+                }
+                // persist the selection for this language
+                try { saveVoiceForLang(langAbbrev, match.voiceURI); } catch (e) { /* ignore */ }
+            } else {
+                alert('No compatible speech voice found for this language. Playback cannot start.');
+                return;
+            }
+        }
+
+        const table = document.getElementById('chapterBodyTable');
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            utterance.lang = selectedVoice.lang;
+        } else {
+            utterance.lang = getSpeechLangForColumn(col);
+        }
+        utterance.rate = 1.0;
+        utterance.rate = speechRate;
+        utterance.pitch = 1.0;
+
+        const speechRows = [];
+        let cumulativeLength = 0;
+        for (let rowIndex = speechStartRow; rowIndex < table.rows.length; rowIndex++) {
+            const cell = table.rows[rowIndex].cells[col];
+            if (!cell) continue;
+            const rowText = cell.textContent.trim();
+            if (!rowText) continue;
+            cumulativeLength += rowText.length + 1; // newline separator
+            speechRows.push({ rowIndex, endIndex: cumulativeLength });
+        }
+
+        currentSpeechRow = speechRows.length ? speechRows[0].rowIndex : null;
+        highlightSpeechCell(currentSpeechRow);
+
+        utterance.onboundary = (event) => {
+            if (event.charIndex == null || !speechRows.length) return;
+            for (let i = 0; i < speechRows.length; i++) {
+                if (event.charIndex < speechRows[i].endIndex) {
+                    if (speechRows[i].rowIndex !== currentSpeechRow) {
+                        highlightSpeechCell(speechRows[i].rowIndex);
+                        // Keep `currentSpeechRow` in sync with what's highlighted so any
+                        // restart (e.g., after changing voice) resumes from the current
+                        // verse rather than the original start verse.
+                        currentSpeechRow = speechRows[i].rowIndex;
+                    }
+                    break;
+                }
+            }
+        };
+
+        speechActive = true;
+        speechPaused = false;
+        updateSpeechToggleButtonState();
+        utterance.onend = () => {
+            currentSpeechColumn = null;
+            speechActive = false;
+            speechPaused = false;
+            updateSpeechToggleButtonState();
+        };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function updateSpeechToggleButtonState() {
+        const button = document.getElementById('toggleSpeechButton');
+        const icon = document.getElementById('toggleSpeechIcon');
+        if (!button || !icon) return;
+
+        const svg = icon.querySelector('svg') || document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'currentColor');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        if (speechActive) {
+            if (speechPaused) {
+                button.setAttribute('aria-label', `Resume speech (${speechRate.toFixed(2)}×)`);
+                svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+                button.classList.add('speech-paused');
+                button.classList.remove('speech-stopped');
+            } else {
+                button.setAttribute('aria-label', `Pause speech (${speechRate.toFixed(2)}×)`);
+                svg.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />';
+                button.classList.remove('speech-paused');
+                button.classList.remove('speech-stopped');
+            }
+        } else {
+            button.setAttribute('aria-label', `Play speech (${speechRate.toFixed(2)}×)`);
+            svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+            button.classList.remove('speech-paused');
+            button.classList.add('speech-stopped');
+        }
+
+        if (!icon.contains(svg)) {
+            icon.innerHTML = '';
+            icon.appendChild(svg);
+        }
+    }
+
+    function showSpeechRateIndicator() {
+        const label = document.getElementById('speechSpeedIndicator');
+        if (!label) return;
+
+        label.textContent = `${speechRate.toFixed(2)}×`;
+        label.style.display = 'block';
+        clearTimeout(speechSpeedLabelTimer);
+        speechSpeedLabelTimer = setTimeout(() => {
+            label.style.display = 'none';
+        }, 1200);
+    }
+
+    function cycleSpeechRate() {
+        const currentIndex = speechRateOptions.indexOf(speechRate);
+        const nextIndex = (currentIndex + 1) % speechRateOptions.length;
+        speechRate = speechRateOptions[nextIndex];
+        showSpeechRateIndicator();
+        updateSpeechToggleButtonState();
+
+        if (speechActive && !speechPaused) {
+            const restartColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+            stopSpeech();
+            speakColumn(restartColumn);
+        }
+    }
+
+    function handleSpeechButtonPress(event) {
+        speechButtonPressTimer = window.setTimeout(() => {
+            speechLongPressTriggered = true;
+            ignoreNextSpeechToggleClick = true;
+            if (speechActive && !speechPaused) {
+                speechWasPlayingBeforeSpeedSelection = true;
+                window.speechSynthesis.pause();
+                speechPaused = true;
+                updateSpeechToggleButtonState();
+            } else {
+                speechWasPlayingBeforeSpeedSelection = false;
+            }
+            openSpeechSpeedDialog();
+        }, 500);
+    }
+
+    function handleSpeechButtonRelease() {
+        if (speechButtonPressTimer) {
+            clearTimeout(speechButtonPressTimer);
+            speechButtonPressTimer = null;
+        }
+    }
+
+    function handleSpeechButtonCancel() {
+        if (speechButtonPressTimer) {
+            clearTimeout(speechButtonPressTimer);
+            speechButtonPressTimer = null;
+        }
+    }
+
+    function openSpeechSpeedDialog() {
+        const dialog = document.getElementById('speechSpeedDialog');
+        if (!dialog) return;
+
+        dialog.innerHTML = '';
+
+        const label = document.createElement('label');
+        label.innerHTML = '<span>Choose speed</span>';
+
+        const valueDisplay = document.createElement('span');
+        valueDisplay.className = 'speed-value';
+        valueDisplay.textContent = `${speechRate.toFixed(2)}×`;
+        label.appendChild(valueDisplay);
+
+        const range = document.createElement('input');
+        range.type = 'range';
+        range.min = '0.5';
+        range.max = '2.0';
+        range.step = '0.1';
+        range.value = speechRate.toFixed(1);
+        range.addEventListener('input', () => {
+            valueDisplay.textContent = `${parseFloat(range.value).toFixed(2)}×`;
+        });
+        label.appendChild(range);
+        dialog.appendChild(label);
+
+        const actions = document.createElement('div');
+        actions.className = 'speed-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', () => {
+            closeSpeechSpeedDialog();
+            if (speechWasPlayingBeforeSpeedSelection) {
+                speechPaused = false;
+                window.speechSynthesis.resume();
+                updateSpeechToggleButtonState();
+            }
+        });
+        actions.appendChild(cancelBtn);
+
+        const setBtn = document.createElement('button');
+        setBtn.type = 'button';
+        setBtn.textContent = 'Set';
+        setBtn.addEventListener('click', () => selectSpeechRate(parseFloat(range.value)));
+        actions.appendChild(setBtn);
+
+        dialog.appendChild(actions);
+        dialog.style.display = 'grid';
+    }
+
+    function closeSpeechSpeedDialog() {
+        const dialog = document.getElementById('speechSpeedDialog');
+        if (!dialog) return;
+        dialog.style.display = 'none';
+    }
+
+    function selectSpeechRate(rate) {
+        speechRate = Math.min(2.0, Math.max(0.5, Math.round(rate * 10) / 10));
+        showSpeechRateIndicator();
+        updateSpeechToggleButtonState();
+        closeSpeechSpeedDialog();
+        if (speechWasPlayingBeforeSpeedSelection) {
+            speechWasPlayingBeforeSpeedSelection = false;
+            restartSpeechAfterSpeedChange();
+        }
+    }
+
+    function restartSpeechAfterSpeedChange() {
+        const resumeRow = currentSpeechRow || speechStartRow;
+        const resumeColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+        stopSpeech();
+        speakColumn(resumeColumn, resumeRow);
+    }
+
+    function toggleSpeech() {
+        if (ignoreNextSpeechToggleClick) {
+            ignoreNextSpeechToggleClick = false;
+            return;
+        }
+
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported in this browser.');
+            return;
+        }
+
+        if (speechActive) {
+            if (speechPaused) {
+                window.speechSynthesis.resume();
+                speechPaused = false;
+            } else {
+                window.speechSynthesis.pause();
+                speechPaused = true;
+            }
+            updateSpeechToggleButtonState();
+            return;
+        }
+
+        speakColumn(speechStartColumn);
+    }
+
+    function stopSpeech() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            currentSpeechColumn = null;
+            speechActive = false;
+            speechPaused = false;
+            updateSpeechToggleButtonState();
+        }
+    }
+
+    // Allow pressing Escape to immediately stop any active or paused speech
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+            if (speechActive || speechPaused) {
+                stopSpeech();
+                e.preventDefault();
+            }
+        }
+    });
+
+    function speakColumnPrompt() {
+        const options = langs
+            .map((lang, index) => {
+                if (lang === 'none') return null;
+                const langName = langNames.find(item => item.ldsAbbrev === lang)?.ldsFull || lang;
+                return `${index + 1}: ${langName}`;
+            })
+            .filter(Boolean)
+            .join('\n');
+
+        const promptText = `Which column would you like to read?\n${options}`;
+        const choice = prompt(promptText, '1');
+        if (choice === null) return;
+
+        const column = parseInt(choice, 10) - 1;
+        if (Number.isNaN(column) || column < 0 || column >= langs.length || langs[column] === 'none') {
+            alert('Please enter a valid column number.');
+            return;
+        }
+
+        speakColumn(column);
+    }
+
     function setCookie(cname, cvalue, exdays) {
         const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
         document.cookie = `${cname}=${cvalue}; expires=${expires}`;
@@ -861,7 +1654,34 @@
         // Render the chapter summary + verses
         for (let i = 0; i < tmpData.length; i++) {
             let r = b.insertRow(i + 1);
+            r.classList.add('clickableRow');
             if (i == 0) r.classList.add('chapterHeading');
+            r.addEventListener('click', (event) => {
+                const target = event.target;
+                const cell = target.closest('td');
+                const colIndex = cell ? cell.cellIndex : 0;
+                setSpeechStartCell(r.rowIndex, colIndex);
+                if (speechActive) {
+                    // Immediately start speaking from the newly selected cell
+                    speakColumn(speechStartColumn);
+                }
+            });
+
+            // Double-clicking a row should select that cell and start speaking immediately
+            r.addEventListener('dblclick', (event) => {
+                const target = event.target;
+                const cell = target.closest('td');
+                const colIndex = cell ? cell.cellIndex : 0;
+                setSpeechStartCell(r.rowIndex, colIndex);
+                // If speech was paused, explicitly restart from the selected cell.
+                // Otherwise start speaking immediately from the selected cell's column.
+                if (speechPaused) {
+                    stopSpeech();
+                    speakColumn(speechStartColumn);
+                } else {
+                    speakColumn(speechStartColumn);
+                }
+            });
             for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i + 1].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
@@ -872,6 +1692,8 @@
                 cell.style.lineBreak = 'strict'
             }
         }
+
+        // Do not highlight a start cell until the user clicks one.
     }
 
     // This function does the work of fetching data and filling in page 
@@ -903,9 +1725,53 @@
         setupThreeListDialog();  // Set up the language picker dialog
         setupTreePicker();       // Set up the vol/chapter picker dialog
 
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+            };
+            populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+            const voiceSelect = document.getElementById('speechVoiceSelect');
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', () => {
+                    const langAbbrev = langs[speechStartColumn] || 'eng';
+                    saveVoiceForLang(langAbbrev, voiceSelect.value);
+                    localStorage.setItem('speechVoiceURI', voiceSelect.value);
+
+                    // If speech is currently actively playing, restart playback using the
+                    // newly selected voice so the change takes effect immediately. Do not
+                    // restart when speech is merely paused.
+                    if (speechActive && !speechPaused) {
+                        const resumeRow = currentSpeechRow || speechStartRow;
+                        const resumeColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+                        stopSpeech();
+                        speakColumn(resumeColumn, resumeRow);
+                    }
+                });
+            }
+
+            const toggleSpeechButton = document.getElementById('toggleSpeechButton');
+            if (toggleSpeechButton) {
+                toggleSpeechButton.addEventListener('mousedown', handleSpeechButtonPress);
+                toggleSpeechButton.addEventListener('touchstart', handleSpeechButtonPress, { passive: false });
+                toggleSpeechButton.addEventListener('mouseup', handleSpeechButtonRelease);
+                toggleSpeechButton.addEventListener('mouseleave', handleSpeechButtonCancel);
+                toggleSpeechButton.addEventListener('touchend', handleSpeechButtonRelease);
+                toggleSpeechButton.addEventListener('touchcancel', handleSpeechButtonCancel);
+                toggleSpeechButton.addEventListener('click', (event) => {
+                    if (speechLongPressTriggered || ignoreNextSpeechToggleClick) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        speechLongPressTriggered = false;
+                        ignoreNextSpeechToggleClick = false;
+                    }
+                });
+            }
+        }
+
         langs = params.lang; // Set languages to last cookie value
         fixFontSize(params.siz); // Try to adjust font size depending on display size
         jssiz(0, params.siz);  // Set font size to cookie value, then resize everything
+        updateSpeechToggleButtonState();
         getAndRenderData(); // Fetch and load first screen's data
     }
 </script>
