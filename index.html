@@ -153,6 +153,125 @@
         #navbar .speech-controls {
             display: inline-flex;
             align-items: center;
+            position: relative;
+        }
+
+        #navbar .speech-speed-indicator {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.2rem;
+            padding: 0.15rem 0.45rem;
+            background: rgba(0, 0, 0, 0.78);
+            color: white;
+            border-radius: 0.35rem;
+            font-size: 0.9rem;
+            line-height: 1;
+            white-space: nowrap;
+            display: none;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #speechSpeedDialog {
+            position: absolute;
+            top: calc(100% + 0.3rem);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.92);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.4rem;
+            display: none;
+            min-width: 10rem;
+            z-index: 25;
+            box-shadow: 0 0 16px rgba(0, 0, 0, 0.35);
+        }
+
+        #speechSpeedDialog {
+            display: none;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        #speechSpeedDialog label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.9rem;
+        }
+
+        #speechSpeedDialog input[type="range"] {
+            width: 12rem;
+            accent-color: #ffffff;
+        }
+
+        #speechSpeedDialog .speed-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        #speechSpeedDialog .speed-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        #speechSpeedDialog button {
+            flex: 1;
+            min-width: 0;
+            padding: 0.45rem 0.6rem;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 0.35rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        #speechSpeedDialog button:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        dialog#aboutDialog {
+            width: min(40rem, 95vw);
+            max-height: 80vh;
+            padding: 1rem 1.2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        dialog#aboutDialog .dialog-content {
+            max-height: calc(80vh - 6rem);
+            overflow-y: auto;
+            text-align: left;
+            padding-right: 0.4rem;
+        }
+
+        dialog#aboutDialog .dialog-content h2 {
+            margin-top: 1rem;
+            margin-bottom: 0.35rem;
+            font-size: 1.05rem;
+        }
+
+        dialog#aboutDialog .dialog-content p,
+        dialog#aboutDialog .dialog-content li {
+            margin: 0.35rem 0;
+            line-height: 1.4;
+        }
+
+        dialog#aboutDialog ul {
+            padding-left: 1.1rem;
+            margin: 0.35rem 0 0.8rem;
+        }
+
+        dialog#aboutDialog button.dialog-btn {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
+            font-size: 1rem;
+            margin-top: 0.8rem;
         }
 
         #navbar .svg-icon {
@@ -193,6 +312,8 @@
                 onclick="stopSpeech()">
                 <span aria-hidden="true">⏹</span>
             </button>
+            <div id="speechSpeedIndicator" class="speech-speed-indicator" aria-live="polite">1.00×</div>
+            <div id="speechSpeedDialog" class="speech-speed-dialog" aria-hidden="true"></div>
         </div>
         <div>
             <button class="nav-button delayed" aria-label="Increase text size" onclick="jssiz(2, 0)">
@@ -230,27 +351,68 @@
         <table id='chapterBodyTable' class='verses'></table>
     </main>
 
-    <!-- The about pop up -->
+    <!-- The help pop up -->
     <dialog id="aboutDialog">
         <form method="dialog">
-            <p style="text-align: center;">
-                <b>Multi-column Scriptures</b><br>
-                Brent Nelson, June 17, 2026<br>
-                For Personal Use Only<br>
-                Not endorsed by or affiliated with <br>
-                The Church of Jesus Christ <br>
-                of Latter Day Saints<br>
-                or<br>Brigham Young University
-            </p>
-            <div class="textLeft">
-                <p id="aboutChap">Chap goes here</p>
-                <p>Text size = <span id="textSize"></span>px,
-                    Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
-                <p>Not all volumes are available in all languages, <br>
-                    &nbsp; &nbsp; e.g. Book of Mormon only for 漢語拼音.
+            <div class="dialog-content">
+                <p style="text-align: center; font-weight: bold; margin-bottom: 0.75rem;">
+                    Multi-column Scriptures<br>
+                    Brent Nelson, June 17, 2026
                 </p>
+
+                <section>
+                    <h2>1.0 The Navigation Bar</h2>
+                    <p>The icons across the top of the screen provide quick access to common functions such as
+                        book/chapter navigation, languages selection, text size adjustment, and speech controls.
+                        Experiment with them to find the best way to use them for your needs.</p>
+                </section>
+
+                <section>
+                    <h2>2.0 Using the Text-to-Speech Reader</h2>
+                    <p>Tap any verse in the language desired to choose the starting location for speech playback.
+                        The highlighted verse is
+                        where reading will begin.</p>
+                    <ul>
+                        <li>Press the play button to start or pause narration.</li>
+                        <li>Use the stop button to cancel playback immediately.</li>
+                        <li>Choose a voice with the selector when available.</li>
+                    </ul>
+                    <h2>2.1 Speech speed</h2>
+                    <p>Long-press the play button to open a speed selector. If narration was already playing, it will
+                        pause while you choose a speed and resume after selection.</p>
+                    <p>If playback was not active, selecting a speed will not start speech but the newly selected speed
+                        will be used for the next playback session.</p>
+                    <h2>2.2 Voice selection</h2>
+                    <p>The speech voice list is filtered by language. If no voice is available, the selector is disabled
+                        and playback cannot start for that language.</p>
+                </section>
+
+                <section>
+                    <h2>3.0 Scripture Availability</h2>
+                    <p>Not all volumes are available in all languages. For example, the Old Testament is not available
+                        in any language. None of the Bible is available for a number of languages.
+                    </p>
+                    <p>Screen and text size are shown below for troubleshooting.</p>
+                </section>
+
+                <section>
+                    <h2>4.0 Language Availability</h2>
+                    <p>The languages available for simply those for which I had interest from friends. Others can be
+                        quickly added if there is interest. If you want a language added, let me know!
+                    </p>
+                </section>
+
+                <section>
+                    <h2>5.0 Other Info</h2>
+
+                </section>
+                <div class="textLeft">
+                    <p>Text size = <span id="textSize"></span>px </p>
+                    <p>Screen size = <span id="screenWid"></span> x <span id="screenHt"></span></p>
+                    <p id="aboutChap">Current location information appears here.</p>
+                </div>
             </div>
-            <button value="ok" class="dialog-btn">OK</button>
+            <button value="ok" class="dialog-btn">Close</button>
         </form>
     </dialog>
 
@@ -752,6 +914,13 @@
     let speechStartRow = 1;
     let speechStartColumn = 0;
     let currentSpeechRow = null;
+    let speechRate = 1.0;
+    const speechRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+    let speechSpeedLabelTimer = null;
+    let speechButtonPressTimer = null;
+    let speechLongPressTriggered = false;
+    let speechWasPlayingBeforeSpeedSelection = false;
+    let ignoreNextSpeechToggleClick = false;
 
     function saveVoiceForLang(langAbbrev, voiceURI) {
         try {
@@ -938,13 +1107,14 @@
         return text.trim();
     }
 
-    function speakColumn(col) {
+    function speakColumn(col, startRow = speechStartRow) {
         if (!('speechSynthesis' in window)) {
             alert('Speech synthesis is not supported in this browser.');
             return;
         }
 
-        const text = getColumnText(col, speechStartRow);
+        speechStartRow = startRow;
+        const text = getColumnText(col, startRow);
         if (!text) {
             alert('No text found for that column.');
             return;
@@ -968,6 +1138,7 @@
             utterance.lang = getSpeechLangForColumn(col);
         }
         utterance.rate = 1.0;
+        utterance.rate = speechRate;
         utterance.pitch = 1.0;
 
         const speechRows = [];
@@ -1020,14 +1191,14 @@
 
         if (speechActive) {
             if (speechPaused) {
-                button.setAttribute('aria-label', 'Resume speech');
+                button.setAttribute('aria-label', `Resume speech (${speechRate.toFixed(2)}×)`);
                 svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
             } else {
-                button.setAttribute('aria-label', 'Pause speech');
+                button.setAttribute('aria-label', `Pause speech (${speechRate.toFixed(2)}×)`);
                 svg.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />';
             }
         } else {
-            button.setAttribute('aria-label', 'Play speech');
+            button.setAttribute('aria-label', `Play speech (${speechRate.toFixed(2)}×)`);
             svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
         }
 
@@ -1037,7 +1208,144 @@
         }
     }
 
+    function showSpeechRateIndicator() {
+        const label = document.getElementById('speechSpeedIndicator');
+        if (!label) return;
+
+        label.textContent = `${speechRate.toFixed(2)}×`;
+        label.style.display = 'block';
+        clearTimeout(speechSpeedLabelTimer);
+        speechSpeedLabelTimer = setTimeout(() => {
+            label.style.display = 'none';
+        }, 1200);
+    }
+
+    function cycleSpeechRate() {
+        const currentIndex = speechRateOptions.indexOf(speechRate);
+        const nextIndex = (currentIndex + 1) % speechRateOptions.length;
+        speechRate = speechRateOptions[nextIndex];
+        showSpeechRateIndicator();
+        updateSpeechToggleButtonState();
+
+        if (speechActive && !speechPaused) {
+            const restartColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+            stopSpeech();
+            speakColumn(restartColumn);
+        }
+    }
+
+    function handleSpeechButtonPress(event) {
+        speechButtonPressTimer = window.setTimeout(() => {
+            speechLongPressTriggered = true;
+            ignoreNextSpeechToggleClick = true;
+            if (speechActive && !speechPaused) {
+                speechWasPlayingBeforeSpeedSelection = true;
+                window.speechSynthesis.pause();
+                speechPaused = true;
+                updateSpeechToggleButtonState();
+            } else {
+                speechWasPlayingBeforeSpeedSelection = false;
+            }
+            openSpeechSpeedDialog();
+        }, 500);
+    }
+
+    function handleSpeechButtonRelease() {
+        if (speechButtonPressTimer) {
+            clearTimeout(speechButtonPressTimer);
+            speechButtonPressTimer = null;
+        }
+    }
+
+    function handleSpeechButtonCancel() {
+        if (speechButtonPressTimer) {
+            clearTimeout(speechButtonPressTimer);
+            speechButtonPressTimer = null;
+        }
+    }
+
+    function openSpeechSpeedDialog() {
+        const dialog = document.getElementById('speechSpeedDialog');
+        if (!dialog) return;
+
+        dialog.innerHTML = '';
+
+        const label = document.createElement('label');
+        label.innerHTML = '<span>Choose speed</span>';
+
+        const valueDisplay = document.createElement('span');
+        valueDisplay.className = 'speed-value';
+        valueDisplay.textContent = `${speechRate.toFixed(2)}×`;
+        label.appendChild(valueDisplay);
+
+        const range = document.createElement('input');
+        range.type = 'range';
+        range.min = '0.5';
+        range.max = '2.0';
+        range.step = '0.1';
+        range.value = speechRate.toFixed(1);
+        range.addEventListener('input', () => {
+            valueDisplay.textContent = `${parseFloat(range.value).toFixed(2)}×`;
+        });
+        label.appendChild(range);
+        dialog.appendChild(label);
+
+        const actions = document.createElement('div');
+        actions.className = 'speed-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', () => {
+            closeSpeechSpeedDialog();
+            if (speechWasPlayingBeforeSpeedSelection) {
+                speechPaused = false;
+                window.speechSynthesis.resume();
+                updateSpeechToggleButtonState();
+            }
+        });
+        actions.appendChild(cancelBtn);
+
+        const setBtn = document.createElement('button');
+        setBtn.type = 'button';
+        setBtn.textContent = 'Set';
+        setBtn.addEventListener('click', () => selectSpeechRate(parseFloat(range.value)));
+        actions.appendChild(setBtn);
+
+        dialog.appendChild(actions);
+        dialog.style.display = 'grid';
+    }
+
+    function closeSpeechSpeedDialog() {
+        const dialog = document.getElementById('speechSpeedDialog');
+        if (!dialog) return;
+        dialog.style.display = 'none';
+    }
+
+    function selectSpeechRate(rate) {
+        speechRate = Math.min(2.0, Math.max(0.5, Math.round(rate * 10) / 10));
+        showSpeechRateIndicator();
+        updateSpeechToggleButtonState();
+        closeSpeechSpeedDialog();
+        if (speechWasPlayingBeforeSpeedSelection) {
+            speechWasPlayingBeforeSpeedSelection = false;
+            restartSpeechAfterSpeedChange();
+        }
+    }
+
+    function restartSpeechAfterSpeedChange() {
+        const resumeRow = currentSpeechRow || speechStartRow;
+        const resumeColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+        stopSpeech();
+        speakColumn(resumeColumn, resumeRow);
+    }
+
     function toggleSpeech() {
+        if (ignoreNextSpeechToggleClick) {
+            ignoreNextSpeechToggleClick = false;
+            return;
+        }
+
         if (!('speechSynthesis' in window)) {
             alert('Speech synthesis is not supported in this browser.');
             return;
@@ -1331,6 +1639,24 @@
                     const langAbbrev = langs[speechStartColumn] || 'eng';
                     saveVoiceForLang(langAbbrev, voiceSelect.value);
                     localStorage.setItem('speechVoiceURI', voiceSelect.value);
+                });
+            }
+
+            const toggleSpeechButton = document.getElementById('toggleSpeechButton');
+            if (toggleSpeechButton) {
+                toggleSpeechButton.addEventListener('mousedown', handleSpeechButtonPress);
+                toggleSpeechButton.addEventListener('touchstart', handleSpeechButtonPress, { passive: false });
+                toggleSpeechButton.addEventListener('mouseup', handleSpeechButtonRelease);
+                toggleSpeechButton.addEventListener('mouseleave', handleSpeechButtonCancel);
+                toggleSpeechButton.addEventListener('touchend', handleSpeechButtonRelease);
+                toggleSpeechButton.addEventListener('touchcancel', handleSpeechButtonCancel);
+                toggleSpeechButton.addEventListener('click', (event) => {
+                    if (speechLongPressTriggered || ignoreNextSpeechToggleClick) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        speechLongPressTriggered = false;
+                        ignoreNextSpeechToggleClick = false;
+                    }
                 });
             }
         }
