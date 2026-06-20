@@ -164,6 +164,17 @@
             display: inline-flex;
         }
 
+        /* Hide the select until voices are explicitly opened */
+        #speechControlsPanel select {
+            display: none;
+        }
+
+        /* When the panel has the voices-open class, show the select */
+        #speechControlsPanel.expanded.voices-open select {
+            display: inline-block;
+            min-width: 8rem;
+        }
+
         /* Compact toggle button that reveals the speech panel */
         #speechPanelToggle {
             font-size: 1.1rem;
@@ -324,6 +335,7 @@
         <button id="speechPanelToggle" class="nav-button delayed" aria-label="Show speech controls"
             title="Speech controls">🔊</button>
         <div class="speech-controls" id="speechControlsPanel">
+            <button id="openVoicesButton" type="button" class="nav-button delayed" aria-label="Open voices">🎙️</button>
             <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
                 <option disabled selected>Loading voices...</option>
             </select>
@@ -969,7 +981,7 @@
     let speechWasPlayingBeforeSpeedSelection = false;
     let ignoreNextSpeechToggleClick = false;
     let speechPanelAutoCollapseTimer = null;
-    const SPEECH_PANEL_AUTO_COLLAPSE_MS = 6000; // milliseconds until auto-collapse
+    const SPEECH_PANEL_AUTO_COLLAPSE_MS = 3000; // milliseconds until auto-collapse
 
     function saveVoiceForLang(langAbbrev, voiceURI) {
         try {
@@ -1463,7 +1475,14 @@
 
     function scheduleSpeechPanelAutoCollapse() {
         cancelSpeechPanelAutoCollapse();
+        if (speechActive) {
+            return;
+        }
         speechPanelAutoCollapseTimer = setTimeout(() => {
+            if (speechActive) {
+                speechPanelAutoCollapseTimer = null;
+                return;
+            }
             const speechPanel = document.getElementById('speechControlsPanel');
             if (speechPanel) {
                 speechPanel.classList.remove('expanded');
@@ -1487,6 +1506,10 @@
             speechActive = false;
             speechPaused = false;
             updateSpeechToggleButtonState();
+            const speechPanel = document.getElementById('speechControlsPanel');
+            if (speechPanel && speechPanel.classList.contains('expanded')) {
+                scheduleSpeechPanelAutoCollapse();
+            }
         }
     }
 
@@ -1780,6 +1803,13 @@
                     saveVoiceForLang(langAbbrev, voiceSelect.value);
                     localStorage.setItem('speechVoiceURI', voiceSelect.value);
 
+                    // Hide the selector after the user chooses a voice.
+                    const speechPanel = document.getElementById('speechControlsPanel');
+                    if (speechPanel) {
+                        speechPanel.classList.remove('voices-open');
+                        scheduleSpeechPanelAutoCollapse();
+                    }
+
                     // If speech is currently actively playing, restart playback using the
                     // newly selected voice so the change takes effect immediately. Do not
                     // restart when speech is merely paused.
@@ -1800,13 +1830,13 @@
                     // If expanding, ensure voices are populated for current start column
                     if (expanded) {
                         populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
-                        // focus the select so keyboard users can navigate immediately
-                        const sel = document.getElementById('speechVoiceSelect');
-                        if (sel) sel.focus();
-                        // schedule auto-collapse
+                        // Do not auto-focus the select on expand; provide an explicit
+                        // 'Open voices' button so mobile browsers don't pop open native pickers.
                         scheduleSpeechPanelAutoCollapse();
                     } else {
                         // if collapsing, also close any open speed dialog and cancel auto-collapse
+                        // and hide the voice selector if it was open.
+                        speechPanel.classList.remove('voices-open');
                         closeSpeechSpeedDialog();
                         cancelSpeechPanelAutoCollapse();
                     }
@@ -1819,6 +1849,27 @@
                         if (speechPanel.classList.contains('expanded')) scheduleSpeechPanelAutoCollapse();
                     });
                 });
+
+                // Wire the explicit 'Open voices' button to toggle the visibility of the select.
+                const openVoicesBtn = document.getElementById('openVoicesButton');
+                if (openVoicesBtn) {
+                    openVoicesBtn.addEventListener('click', () => {
+                        if (!speechPanel.classList.contains('expanded')) {
+                            speechPanel.classList.add('expanded');
+                            scheduleSpeechPanelAutoCollapse();
+                        }
+                        const nowOpen = speechPanel.classList.toggle('voices-open');
+                        if (nowOpen) {
+                            cancelSpeechPanelAutoCollapse();
+                            const sel = document.getElementById('speechVoiceSelect');
+                            if (sel) {
+                                try { sel.focus(); sel.click(); } catch (e) { /* ignore */ }
+                            }
+                        } else {
+                            scheduleSpeechPanelAutoCollapse();
+                        }
+                    });
+                }
             }
 
             const toggleSpeechButton = document.getElementById('toggleSpeechButton');
