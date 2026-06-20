@@ -116,7 +116,9 @@
         }
 
         #chapterBodyTable td.speech-start-cell {
-            background-color: #ffe7a0;
+            background-color: transparent;
+            box-shadow: inset 0 0 0 3px rgba(255, 183, 77, 0.95);
+            transition: box-shadow 120ms ease-in-out;
         }
 
         .textLeft {
@@ -281,6 +283,15 @@
             width: 1.2rem;
             height: 1.2rem;
         }
+
+        /* Speech button state colors */
+        #toggleSpeechButton.speech-paused {
+            color: #e52b2b;
+        }
+
+        #toggleSpeechButton.speech-stopped {
+            color: #000;
+        }
     </style>
     <!-------------------------------------------->
 </head>
@@ -379,6 +390,8 @@
                         <li>Press the play button to start or pause narration.</li>
                         <li>Use the stop button to cancel playback immediately.</li>
                         <li>Choose a voice with the selector when available.</li>
+                        <li> You can also double-click a verse to start playback from that point.</li>
+                        <li>Finally, hitting the ESC key will stop the current playback.</li>
                     </ul>
                     <h2>2.1 Speech speed</h2>
                     <p>
@@ -1209,6 +1222,10 @@
                 if (event.charIndex < speechRows[i].endIndex) {
                     if (speechRows[i].rowIndex !== currentSpeechRow) {
                         highlightSpeechCell(speechRows[i].rowIndex);
+                        // Keep `currentSpeechRow` in sync with what's highlighted so any
+                        // restart (e.g., after changing voice) resumes from the current
+                        // verse rather than the original start verse.
+                        currentSpeechRow = speechRows[i].rowIndex;
                     }
                     break;
                 }
@@ -1241,13 +1258,19 @@
             if (speechPaused) {
                 button.setAttribute('aria-label', `Resume speech (${speechRate.toFixed(2)}×)`);
                 svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+                button.classList.add('speech-paused');
+                button.classList.remove('speech-stopped');
             } else {
                 button.setAttribute('aria-label', `Pause speech (${speechRate.toFixed(2)}×)`);
                 svg.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />';
+                button.classList.remove('speech-paused');
+                button.classList.remove('speech-stopped');
             }
         } else {
             button.setAttribute('aria-label', `Play speech (${speechRate.toFixed(2)}×)`);
             svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+            button.classList.remove('speech-paused');
+            button.classList.add('speech-stopped');
         }
 
         if (!icon.contains(svg)) {
@@ -1423,6 +1446,16 @@
             updateSpeechToggleButtonState();
         }
     }
+
+    // Allow pressing Escape to immediately stop any active or paused speech
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+            if (speechActive || speechPaused) {
+                stopSpeech();
+                e.preventDefault();
+            }
+        }
+    });
 
     function speakColumnPrompt() {
         const options = langs
@@ -1633,6 +1666,22 @@
                     speakColumn(speechStartColumn);
                 }
             });
+
+            // Double-clicking a row should select that cell and start speaking immediately
+            r.addEventListener('dblclick', (event) => {
+                const target = event.target;
+                const cell = target.closest('td');
+                const colIndex = cell ? cell.cellIndex : 0;
+                setSpeechStartCell(r.rowIndex, colIndex);
+                // If speech was paused, explicitly restart from the selected cell.
+                // Otherwise start speaking immediately from the selected cell's column.
+                if (speechPaused) {
+                    stopSpeech();
+                    speakColumn(speechStartColumn);
+                } else {
+                    speakColumn(speechStartColumn);
+                }
+            });
             for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i + 1].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
@@ -1687,6 +1736,16 @@
                     const langAbbrev = langs[speechStartColumn] || 'eng';
                     saveVoiceForLang(langAbbrev, voiceSelect.value);
                     localStorage.setItem('speechVoiceURI', voiceSelect.value);
+
+                    // If speech is currently actively playing, restart playback using the
+                    // newly selected voice so the change takes effect immediately. Do not
+                    // restart when speech is merely paused.
+                    if (speechActive && !speechPaused) {
+                        const resumeRow = currentSpeechRow || speechStartRow;
+                        const resumeColumn = currentSpeechColumn !== null ? currentSpeechColumn : speechStartColumn;
+                        stopSpeech();
+                        speakColumn(resumeColumn, resumeRow);
+                    }
                 });
             }
 
