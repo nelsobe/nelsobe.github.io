@@ -153,10 +153,23 @@
             min-width: 8rem;
         }
 
+        /* Speech controls are hidden by default to save navbar space. */
         #navbar .speech-controls {
-            display: inline-flex;
+            display: none;
             align-items: center;
             position: relative;
+        }
+
+        /* When expanded, show the inline controls */
+        #navbar .speech-controls.expanded {
+            display: inline-flex;
+        }
+
+        /* Compact toggle button that reveals the speech panel */
+        #speechPanelToggle {
+            font-size: 1.1rem;
+            padding: 0.15rem 0.35rem;
+            margin-right: 0.2rem;
         }
 
         #navbar .speech-speed-indicator {
@@ -287,7 +300,7 @@
 
         /* Speech button state colors */
         #toggleSpeechButton.speech-paused {
-            color: #e52b2b;
+            color: #777;
         }
 
         #toggleSpeechButton.speech-stopped {
@@ -309,7 +322,9 @@
         <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
             <img src="Figures/lang.png" alt="Choose languages">
         </button>
-        <div class="speech-controls">
+        <button id="speechPanelToggle" class="nav-button delayed" aria-label="Show speech controls"
+            title="Speech controls">🔊</button>
+        <div class="speech-controls" id="speechControlsPanel">
             <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
                 <option disabled selected>Loading voices...</option>
             </select>
@@ -346,10 +361,10 @@
         <button class="nav-button delayed" aria-label="About this app" onclick="jsabout()">
             <img src="Figures/question.png" alt="About this app">
         </button>
-        <button class="nav-button delayed" aria-label="Clear cache"
+        <!-- <button class="nav-button delayed" aria-label="Clear cache"
             onclick="window.sessionStorage.clear(); console.log('Cache cleared...'); alert('Cache cleared...');">
             <img src="Figures/clearCache.png" alt="Clear cache">
-        </button>
+        </button> -->
     </nav>
 
     <!-- The title section just below the navigation bar-->
@@ -954,6 +969,8 @@
     let speechLongPressTriggered = false;
     let speechWasPlayingBeforeSpeedSelection = false;
     let ignoreNextSpeechToggleClick = false;
+    let speechPanelAutoCollapseTimer = null;
+    const SPEECH_PANEL_AUTO_COLLAPSE_MS = 6000; // milliseconds until auto-collapse
 
     function saveVoiceForLang(langAbbrev, voiceURI) {
         try {
@@ -1386,12 +1403,19 @@
 
         dialog.appendChild(actions);
         dialog.style.display = 'grid';
+        // Prevent the speech panel from auto-collapsing while the speed dialog is open
+        cancelSpeechPanelAutoCollapse();
     }
 
     function closeSpeechSpeedDialog() {
         const dialog = document.getElementById('speechSpeedDialog');
         if (!dialog) return;
         dialog.style.display = 'none';
+        // Resume auto-collapse scheduling if the speech panel remains expanded
+        const speechPanel = document.getElementById('speechControlsPanel');
+        if (speechPanel && speechPanel.classList.contains('expanded')) {
+            scheduleSpeechPanelAutoCollapse();
+        }
     }
 
     function selectSpeechRate(rate) {
@@ -1436,6 +1460,25 @@
         }
 
         speakColumn(speechStartColumn);
+    }
+
+    function scheduleSpeechPanelAutoCollapse() {
+        cancelSpeechPanelAutoCollapse();
+        speechPanelAutoCollapseTimer = setTimeout(() => {
+            const speechPanel = document.getElementById('speechControlsPanel');
+            if (speechPanel) {
+                speechPanel.classList.remove('expanded');
+                closeSpeechSpeedDialog();
+            }
+            speechPanelAutoCollapseTimer = null;
+        }, SPEECH_PANEL_AUTO_COLLAPSE_MS);
+    }
+
+    function cancelSpeechPanelAutoCollapse() {
+        if (speechPanelAutoCollapseTimer) {
+            clearTimeout(speechPanelAutoCollapseTimer);
+            speechPanelAutoCollapseTimer = null;
+        }
     }
 
     function stopSpeech() {
@@ -1746,6 +1789,35 @@
                         stopSpeech();
                         speakColumn(resumeColumn, resumeRow);
                     }
+                });
+            }
+
+            const panelToggle = document.getElementById('speechPanelToggle');
+            const speechPanel = document.getElementById('speechControlsPanel');
+            if (panelToggle && speechPanel) {
+                panelToggle.addEventListener('click', () => {
+                    const expanded = speechPanel.classList.toggle('expanded');
+                    // If expanding, ensure voices are populated for current start column
+                    if (expanded) {
+                        populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+                        // focus the select so keyboard users can navigate immediately
+                        const sel = document.getElementById('speechVoiceSelect');
+                        if (sel) sel.focus();
+                        // schedule auto-collapse
+                        scheduleSpeechPanelAutoCollapse();
+                    } else {
+                        // if collapsing, also close any open speed dialog and cancel auto-collapse
+                        closeSpeechSpeedDialog();
+                        cancelSpeechPanelAutoCollapse();
+                    }
+                });
+
+                // Reset auto-collapse on interactions inside the speech panel
+                const resetEvents = ['mousemove', 'mouseenter', 'click', 'keydown', 'focusin'];
+                resetEvents.forEach(ev => {
+                    speechPanel.addEventListener(ev, () => {
+                        if (speechPanel.classList.contains('expanded')) scheduleSpeechPanelAutoCollapse();
+                    });
                 });
             }
 
