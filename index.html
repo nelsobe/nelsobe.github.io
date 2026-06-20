@@ -39,9 +39,22 @@
         #navbar button {
             background: none;
             border: none;
-            padding: 0;
+            padding: 0.15rem 0.4rem;
             margin: 0;
             cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        #navbar button.nav-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #navbar button.nav-button span {
+            display: inline-block;
+            line-height: 1;
         }
 
         #navbar img:active,
@@ -98,6 +111,14 @@
             display: inline-block;
         }
 
+        #chapterBodyTable tr.clickableRow {
+            cursor: pointer;
+        }
+
+        #chapterBodyTable td.speech-start-cell {
+            background-color: #ffe7a0;
+        }
+
         .textLeft {
             text-align: left;
         }
@@ -121,6 +142,26 @@
             margin-top: 25px;
             text-align: center;
         }
+
+        #navbar select.speech-column-select,
+        #navbar select.speech-voice-select {
+            font-size: 0.9rem;
+            margin: 0 0.3rem;
+            min-width: 8rem;
+        }
+
+        #navbar .speech-controls {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        #navbar .svg-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
     </style>
     <!-------------------------------------------->
 </head>
@@ -137,6 +178,22 @@
         <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
             <img src="Figures/lang.png" alt="Choose languages">
         </button>
+        <div class="speech-controls">
+            <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
+                <option disabled selected>Loading voices...</option>
+            </select>
+            <button id="toggleSpeechButton" class="nav-button delayed speech-button" aria-label="Play speech"
+                onclick="toggleSpeech()">
+                <span id="toggleSpeechIcon" class="svg-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+                        fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4v16l12-8L4 4z" />
+                    </svg></span>
+            </button>
+            <button id="stopSpeechButton" class="nav-button delayed speech-button" aria-label="Stop speech"
+                onclick="stopSpeech()">
+                <span aria-hidden="true">⏹</span>
+            </button>
+        </div>
         <div>
             <button class="nav-button delayed" aria-label="Increase text size" onclick="jssiz(2, 0)">
                 <img src="Figures/big.png" alt="Increase text size">
@@ -687,6 +744,353 @@
                 alert("Sorry, no PinYin exists for the " + getVolumeName(params.vol));
     }
 
+    let currentSpeechColumn = null;
+    let availableSpeechVoices = [];
+    let speechVoiceAvailable = true;
+    let speechActive = false;
+    let speechPaused = false;
+    let speechStartRow = 1;
+    let speechStartColumn = 0;
+    let currentSpeechRow = null;
+
+    function saveVoiceForLang(langAbbrev, voiceURI) {
+        try {
+            const map = JSON.parse(localStorage.getItem('speechVoiceByLang') || '{}');
+            map[langAbbrev] = voiceURI;
+            localStorage.setItem('speechVoiceByLang', JSON.stringify(map));
+        } catch (e) { console.warn('Could not save voice mapping', e); }
+    }
+
+    function getSavedVoiceForLang(langAbbrev) {
+        try {
+            const map = JSON.parse(localStorage.getItem('speechVoiceByLang') || '{}');
+            return map[langAbbrev] || null;
+        } catch (e) { return null; }
+    }
+
+    function highlightSpeechCell(rowIndex) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return;
+
+        const previousStartCell = table.querySelector('td.speech-start-cell');
+        if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
+
+        const row = table.rows[rowIndex];
+        if (!row) return;
+
+        const cell = row.cells[speechStartColumn];
+        if (cell) {
+            cell.classList.add('speech-start-cell');
+            speechStartRow = rowIndex;
+            // Ensure the active cell is visible near the top of the viewport (below the navbar)
+            const nav = document.getElementById('navbar');
+            const navHeight = nav ? nav.offsetHeight : 0;
+            const rect = cell.getBoundingClientRect();
+            const isVisible = (rect.top >= navHeight) && (rect.bottom <= window.innerHeight);
+            if (!isVisible) {
+                const targetY = window.scrollY + rect.top - navHeight - 8;
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+        }
+    }
+
+    function setSpeechStartCell(rowIndex, colIndex) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return;
+
+        const maxRow = table.rows.length - 1;
+        const maxCol = table.rows[1] ? table.rows[1].cells.length - 1 : 0;
+        if (maxRow < 1) return;
+        if (rowIndex < 1) rowIndex = 1;
+        if (rowIndex > maxRow) rowIndex = maxRow;
+        if (colIndex < 0) colIndex = 0;
+        if (colIndex > maxCol) colIndex = maxCol;
+
+        const previousStartCell = table.querySelector('td.speech-start-cell');
+        if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
+
+        const row = table.rows[rowIndex];
+        const cell = row ? row.cells[colIndex] : null;
+        if (row) {
+            speechStartRow = rowIndex;
+        }
+        if (cell) {
+            cell.classList.add('speech-start-cell');
+            speechStartColumn = colIndex;
+        }
+
+        populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+    }
+
+    function getSpeechLangPrefixForColumn(col) {
+        const lang = langs[col] || 'eng';
+        switch (lang) {
+            case 'eng': return 'en';
+            case 'zhs':
+            case 'zho':
+            case 'cmn-Latn': return 'zh';
+            case 'dan': return 'da';
+            case 'deu': return 'de';
+            case 'spa': return 'es';
+            case 'fra': return 'fr';
+            case 'hil': return '';
+            case 'isl': return 'is';
+            case 'nor': return 'no';
+            case 'jpn': return 'ja';
+            case 'por': return 'pt';
+            case 'tah': return 'ty';
+            default: return '';
+        }
+    }
+
+    function populateSpeechVoiceOptions(languagePrefix = '', langAbbrev = '') {
+        const select = document.getElementById('speechVoiceSelect');
+        if (!select || !('speechSynthesis' in window)) return;
+
+        availableSpeechVoices = window.speechSynthesis.getVoices();
+        if (!availableSpeechVoices.length) return;
+
+        let filteredVoices = languagePrefix
+            ? availableSpeechVoices.filter(voice => voice.lang.toLowerCase().startsWith(languagePrefix.toLowerCase()))
+            : [];
+
+        if (languagePrefix && languagePrefix.toLowerCase() === 'en') {
+            const nonUSVoices = filteredVoices.filter(voice => voice.lang.toLowerCase() !== 'en-us');
+            const samanthaVoices = filteredVoices.filter(voice => voice.lang.toLowerCase() === 'en-us' && voice.name.toLowerCase() === 'samantha');
+            filteredVoices = samanthaVoices.concat(nonUSVoices);
+        }
+
+        select.innerHTML = '';
+        select.disabled = false;
+
+        if (filteredVoices.length > 0) {
+            speechVoiceAvailable = true;
+            const savedVoiceURI = langAbbrev ? getSavedVoiceForLang(langAbbrev) : localStorage.getItem('speechVoiceURI');
+            const previousValue = select.value;
+
+            filteredVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                select.appendChild(option);
+            });
+
+            if (savedVoiceURI && Array.from(select.options).some(opt => opt.value === savedVoiceURI)) {
+                select.value = savedVoiceURI;
+            } else if (previousValue && Array.from(select.options).some(opt => opt.value === previousValue)) {
+                select.value = previousValue;
+            } else if (select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
+        } else {
+            speechVoiceAvailable = false;
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.selected = true;
+            option.textContent = 'No voice available';
+            select.appendChild(option);
+            select.disabled = true;
+        }
+    }
+
+    function getSelectedSpeechVoice() {
+        const select = document.getElementById('speechVoiceSelect');
+        if (!select || !availableSpeechVoices.length) return null;
+
+        const voiceURI = select.value;
+        return availableSpeechVoices.find(voice => voice.voiceURI === voiceURI) || null;
+    }
+
+    function getSpeechLangForColumn(col) {
+        const lang = langs[col] || 'eng';
+        const mapping = {
+            eng: 'en-US',
+            zhs: 'zh-CN',
+            zho: 'zh-TW',
+            'cmn-Latn': 'zh-CN',
+            dan: 'da-DK',
+            deu: 'de-DE',
+            spa: 'es-ES',
+            fra: 'fr-FR',
+            hil: 'en-US',
+            isl: 'is-IS',
+            nor: 'no-NO',
+            jpn: 'ja-JP',
+            por: 'pt-BR',
+            tah: 'ty-TO'
+        };
+        return mapping[lang] || 'en-US';
+    }
+
+    function getColumnText(col, startRow = speechStartRow) {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return '';
+
+        let text = '';
+        for (let rowIndex = startRow; rowIndex < table.rows.length; rowIndex++) {
+            const cell = table.rows[rowIndex].cells[col];
+            if (cell) {
+                const cellText = cell.textContent.trim();
+                if (cellText.length > 0)
+                    text += cellText + '\n';
+            }
+        }
+        return text.trim();
+    }
+
+    function speakColumn(col) {
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported in this browser.');
+            return;
+        }
+
+        const text = getColumnText(col, speechStartRow);
+        if (!text) {
+            alert('No text found for that column.');
+            return;
+        }
+
+        stopSpeech();
+        currentSpeechColumn = col;
+
+        if (!speechVoiceAvailable) {
+            alert('No speech voice available for this language. Playback cannot start.');
+            return;
+        }
+
+        const table = document.getElementById('chapterBodyTable');
+        const utterance = new SpeechSynthesisUtterance(text);
+        const selectedVoice = getSelectedSpeechVoice();
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            utterance.lang = selectedVoice.lang;
+        } else {
+            utterance.lang = getSpeechLangForColumn(col);
+        }
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        const speechRows = [];
+        let cumulativeLength = 0;
+        for (let rowIndex = speechStartRow; rowIndex < table.rows.length; rowIndex++) {
+            const cell = table.rows[rowIndex].cells[col];
+            if (!cell) continue;
+            const rowText = cell.textContent.trim();
+            if (!rowText) continue;
+            cumulativeLength += rowText.length + 1; // newline separator
+            speechRows.push({ rowIndex, endIndex: cumulativeLength });
+        }
+
+        currentSpeechRow = speechRows.length ? speechRows[0].rowIndex : null;
+        highlightSpeechCell(currentSpeechRow);
+
+        utterance.onboundary = (event) => {
+            if (event.charIndex == null || !speechRows.length) return;
+            for (let i = 0; i < speechRows.length; i++) {
+                if (event.charIndex < speechRows[i].endIndex) {
+                    if (speechRows[i].rowIndex !== currentSpeechRow) {
+                        highlightSpeechCell(speechRows[i].rowIndex);
+                    }
+                    break;
+                }
+            }
+        };
+
+        speechActive = true;
+        speechPaused = false;
+        updateSpeechToggleButtonState();
+        utterance.onend = () => {
+            currentSpeechColumn = null;
+            speechActive = false;
+            speechPaused = false;
+            updateSpeechToggleButtonState();
+        };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function updateSpeechToggleButtonState() {
+        const button = document.getElementById('toggleSpeechButton');
+        const icon = document.getElementById('toggleSpeechIcon');
+        if (!button || !icon) return;
+
+        const svg = icon.querySelector('svg') || document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'currentColor');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        if (speechActive) {
+            if (speechPaused) {
+                button.setAttribute('aria-label', 'Resume speech');
+                svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+            } else {
+                button.setAttribute('aria-label', 'Pause speech');
+                svg.innerHTML = '<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />';
+            }
+        } else {
+            button.setAttribute('aria-label', 'Play speech');
+            svg.innerHTML = '<path d="M4 4v16l12-8L4 4z" />';
+        }
+
+        if (!icon.contains(svg)) {
+            icon.innerHTML = '';
+            icon.appendChild(svg);
+        }
+    }
+
+    function toggleSpeech() {
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported in this browser.');
+            return;
+        }
+
+        if (speechActive) {
+            if (speechPaused) {
+                window.speechSynthesis.resume();
+                speechPaused = false;
+            } else {
+                window.speechSynthesis.pause();
+                speechPaused = true;
+            }
+            updateSpeechToggleButtonState();
+            return;
+        }
+
+        speakColumn(speechStartColumn);
+    }
+
+    function stopSpeech() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            currentSpeechColumn = null;
+            speechActive = false;
+            speechPaused = false;
+            updateSpeechToggleButtonState();
+        }
+    }
+
+    function speakColumnPrompt() {
+        const options = langs
+            .map((lang, index) => {
+                if (lang === 'none') return null;
+                const langName = langNames.find(item => item.ldsAbbrev === lang)?.ldsFull || lang;
+                return `${index + 1}: ${langName}`;
+            })
+            .filter(Boolean)
+            .join('\n');
+
+        const promptText = `Which column would you like to read?\n${options}`;
+        const choice = prompt(promptText, '1');
+        if (choice === null) return;
+
+        const column = parseInt(choice, 10) - 1;
+        if (Number.isNaN(column) || column < 0 || column >= langs.length || langs[column] === 'none') {
+            alert('Please enter a valid column number.');
+            return;
+        }
+
+        speakColumn(column);
+    }
+
     function setCookie(cname, cvalue, exdays) {
         const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
         document.cookie = `${cname}=${cvalue}; expires=${expires}`;
@@ -861,7 +1265,18 @@
         // Render the chapter summary + verses
         for (let i = 0; i < tmpData.length; i++) {
             let r = b.insertRow(i + 1);
+            r.classList.add('clickableRow');
             if (i == 0) r.classList.add('chapterHeading');
+            r.addEventListener('click', (event) => {
+                const target = event.target;
+                const cell = target.closest('td');
+                const colIndex = cell ? cell.cellIndex : 0;
+                setSpeechStartCell(r.rowIndex, colIndex);
+                if (speechActive) {
+                    // Immediately start speaking from the newly selected cell
+                    speakColumn(speechStartColumn);
+                }
+            });
             for (let l = 0; l < tmpData[i].length; l++) {
                 cell = b.rows[i + 1].insertCell(l);
                 cell.innerHTML = tmpData[i][l];
@@ -872,6 +1287,8 @@
                 cell.style.lineBreak = 'strict'
             }
         }
+
+        // Do not highlight a start cell until the user clicks one.
     }
 
     // This function does the work of fetching data and filling in page 
@@ -903,9 +1320,25 @@
         setupThreeListDialog();  // Set up the language picker dialog
         setupTreePicker();       // Set up the vol/chapter picker dialog
 
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+            };
+            populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+            const voiceSelect = document.getElementById('speechVoiceSelect');
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', () => {
+                    const langAbbrev = langs[speechStartColumn] || 'eng';
+                    saveVoiceForLang(langAbbrev, voiceSelect.value);
+                    localStorage.setItem('speechVoiceURI', voiceSelect.value);
+                });
+            }
+        }
+
         langs = params.lang; // Set languages to last cookie value
         fixFontSize(params.siz); // Try to adjust font size depending on display size
         jssiz(0, params.siz);  // Set font size to cookie value, then resize everything
+        updateSpeechToggleButtonState();
         getAndRenderData(); // Fetch and load first screen's data
     }
 </script>
