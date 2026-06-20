@@ -410,29 +410,28 @@
                 <section>
                     <h2>2.0 Using the Text-to-Speech Reader</h2>
                     <p>
-                        Tap any verse in the language desired to choose the starting location for speech playback.
-                        The highlighted verse is where reading will begin.
+                        Double click any verse to start speech playback in that language.
+                    </p>
+                    <p>
+                        The speech controls are located at the top of the screen once speech playback is initiated. You
+                        can use them to control the
+                        playback of the text-to-speech reader.
+                    </p>
+                    <p>
+                        The following are the available speech controls:
                     </p>
                     <ul>
-                        <li>Press the play button to start or pause narration.</li>
-                        <li>Use the stop button to cancel playback immediately.</li>
-                        <li>Choose a voice with the selector when available.</li>
-                        <li> You can also double-click a verse to start playback from that point.</li>
-                        <li>Finally, hitting the ESC key will stop the current playback.</li>
+                        <li>Press the play button to start or pause narration. Long-press the play button to adjust the
+                            speech speed.</li>
+                        <li>Press the stop button to cancel playback immediately.</li>
+                        <li>Choose a voice with the microphone icon. For some languages, no voices may be available.
+                        </li>
+                        <li>Hitting the ESC key on a keyboard will stop the current playback.</li>
                     </ul>
-                    <h2>2.1 Speech speed</h2>
-                    <p>
-                        Long-press the play button to open a speed selector. If narration was already playing, it
-                        will pause while you choose a speed and resume after selection.
-                    </p>
-                    <p>
-                        If playback was not active, selecting a speed will not start speech but the newly selected
-                        speed will be used for the next playback session.
-                    </p>
                     <h2>2.2 Voice selection</h2>
                     <p>
-                        The speech voice list is filtered by language. If no voice is available, the selector is
-                        disabled and playback cannot start for that language.
+                        The speech voice list is filtered by language. If no voice is available, the microphone icon
+                        will do nothing and playback cannot start for that language.
                     </p>
                     <p>
                         The voices supported are those available in the browser's speech synthesis API. Thus each
@@ -982,6 +981,8 @@
     let ignoreNextSpeechToggleClick = false;
     let speechPanelAutoCollapseTimer = null;
     const SPEECH_PANEL_AUTO_COLLAPSE_MS = 3000; // milliseconds until auto-collapse
+    let speechVoiceSelectAutoHideTimer = null;
+    const SPEECH_VOICE_LIST_AUTO_HIDE_MS = 3000; // milliseconds until voice list hide
 
     function saveVoiceForLang(langAbbrev, voiceURI) {
         try {
@@ -1188,6 +1189,13 @@
         const langAbbrev = langs[col] || 'eng';
         const langPrefix = getSpeechLangPrefixForColumn(col);
         populateSpeechVoiceOptions(langPrefix, langAbbrev);
+
+        // Display the speech controls while playback is ongoing.
+        const speechPanel = document.getElementById('speechControlsPanel');
+        if (speechPanel && !speechPanel.classList.contains('expanded')) {
+            speechPanel.classList.add('expanded');
+            cancelSpeechPanelAutoCollapse();
+        }
 
         // If populate determined no available voice for this language, refuse to start
         if (!speechVoiceAvailable) {
@@ -1492,6 +1500,24 @@
         }, SPEECH_PANEL_AUTO_COLLAPSE_MS);
     }
 
+    function scheduleSpeechVoiceSelectAutoHide() {
+        cancelSpeechVoiceSelectAutoHide();
+        speechVoiceSelectAutoHideTimer = setTimeout(() => {
+            const speechPanel = document.getElementById('speechControlsPanel');
+            if (speechPanel) {
+                speechPanel.classList.remove('voices-open');
+            }
+            speechVoiceSelectAutoHideTimer = null;
+        }, SPEECH_VOICE_LIST_AUTO_HIDE_MS);
+    }
+
+    function cancelSpeechVoiceSelectAutoHide() {
+        if (speechVoiceSelectAutoHideTimer) {
+            clearTimeout(speechVoiceSelectAutoHideTimer);
+            speechVoiceSelectAutoHideTimer = null;
+        }
+    }
+
     function cancelSpeechPanelAutoCollapse() {
         if (speechPanelAutoCollapseTimer) {
             clearTimeout(speechPanelAutoCollapseTimer);
@@ -1507,8 +1533,12 @@
             speechPaused = false;
             updateSpeechToggleButtonState();
             const speechPanel = document.getElementById('speechControlsPanel');
-            if (speechPanel && speechPanel.classList.contains('expanded')) {
-                scheduleSpeechPanelAutoCollapse();
+            if (speechPanel) {
+                speechPanel.classList.remove('expanded');
+                speechPanel.classList.remove('voices-open');
+                closeSpeechSpeedDialog();
+                cancelSpeechPanelAutoCollapse();
+                cancelSpeechVoiceSelectAutoHide();
             }
         }
     }
@@ -1813,6 +1843,7 @@
                     const speechPanel = document.getElementById('speechControlsPanel');
                     if (speechPanel) {
                         speechPanel.classList.remove('voices-open');
+                        cancelSpeechVoiceSelectAutoHide();
                         scheduleSpeechPanelAutoCollapse();
                     }
 
@@ -1843,6 +1874,7 @@
                         // if collapsing, also close any open speed dialog and cancel auto-collapse
                         // and hide the voice selector if it was open.
                         speechPanel.classList.remove('voices-open');
+                        cancelSpeechVoiceSelectAutoHide();
                         closeSpeechSpeedDialog();
                         cancelSpeechPanelAutoCollapse();
                     }
@@ -1867,11 +1899,13 @@
                         const nowOpen = speechPanel.classList.toggle('voices-open');
                         if (nowOpen) {
                             cancelSpeechPanelAutoCollapse();
+                            scheduleSpeechVoiceSelectAutoHide();
                             const sel = document.getElementById('speechVoiceSelect');
                             if (sel) {
                                 try { sel.focus(); sel.click(); } catch (e) { /* ignore */ }
                             }
                         } else {
+                            cancelSpeechVoiceSelectAutoHide();
                             scheduleSpeechPanelAutoCollapse();
                         }
                     });
