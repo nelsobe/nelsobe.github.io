@@ -973,6 +973,7 @@
     let speechPaused = false;
     let speechStartRow = 1;
     let speechStartColumn = 0;
+    let speechHighlightSuppressed = false;
     let currentSpeechRow = null;
     let speechRate = 1.0;
     const speechRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -1004,6 +1005,7 @@
     function highlightSpeechCell(rowIndex) {
         const table = document.getElementById('chapterBodyTable');
         if (!table) return;
+        if (speechHighlightSuppressed) return;
 
         const previousStartCell = table.querySelector('td.speech-start-cell');
         if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
@@ -1053,6 +1055,15 @@
         }
 
         populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+    }
+
+    function hideSpeechStartHighlight() {
+        const table = document.getElementById('chapterBodyTable');
+        if (!table) return;
+        const previousStartCell = table.querySelector('td.speech-start-cell');
+        if (previousStartCell) previousStartCell.classList.remove('speech-start-cell');
+        // Suppress re-showing the highlight until the panel is expanded or playback starts
+        speechHighlightSuppressed = true;
     }
 
     function getSpeechLangPrefixForColumn(col) {
@@ -1253,6 +1264,8 @@
         }
 
         currentSpeechRow = speechRows.length ? speechRows[0].rowIndex : null;
+        // Ensure highlights are enabled for playback and show the start cell
+        speechHighlightSuppressed = false;
         highlightSpeechCell(currentSpeechRow);
 
         utterance.onboundary = (event) => {
@@ -1497,6 +1510,8 @@
             if (speechPanel) {
                 speechPanel.classList.remove('expanded');
                 closeSpeechSpeedDialog();
+                // When the speech controls hide, also hide the visual start-cell outline
+                hideSpeechStartHighlight();
             }
             speechPanelAutoCollapseTimer = null;
         }, SPEECH_PANEL_AUTO_COLLAPSE_MS);
@@ -1541,6 +1556,8 @@
                 closeSpeechSpeedDialog();
                 cancelSpeechPanelAutoCollapse();
                 cancelSpeechVoiceSelectAutoHide();
+                // Removing the speech controls should also remove the start-cell visual
+                hideSpeechStartHighlight();
             }
         }
     }
@@ -1871,6 +1888,9 @@
                         populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
                         // Do not auto-focus the select on expand; provide an explicit
                         // 'Open voices' button so mobile browsers don't pop open native pickers.
+                        // Clear any suppression so the start-cell outline is visible again
+                        speechHighlightSuppressed = false;
+                        highlightSpeechCell(speechStartRow);
                         scheduleSpeechPanelAutoCollapse();
                     } else {
                         // if collapsing, also close any open speed dialog and cancel auto-collapse
@@ -1879,6 +1899,8 @@
                         cancelSpeechVoiceSelectAutoHide();
                         closeSpeechSpeedDialog();
                         cancelSpeechPanelAutoCollapse();
+                        // Hide the start-cell outline when the panel is collapsed
+                        hideSpeechStartHighlight();
                     }
                 });
 
