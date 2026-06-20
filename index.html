@@ -477,6 +477,7 @@
     <!-- Tree Picker Dialog HTML -->
     <dialog id="pickerDialog">
         <form method="dialog">
+            <button type="button" autofocus style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">Hidden focus trap</button>
             <h3>Select Passage</h3>
             <p>
                 <label>
@@ -827,6 +828,7 @@
             this.dialog = document.createElement('dialog');
             this.dialog.innerHTML = `
       <form method="dialog">
+        <button type="button" autofocus style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">Hidden focus trap</button>
         <div class="row">
           <select name="lang0"></select>
           <select name="lang1"></select>
