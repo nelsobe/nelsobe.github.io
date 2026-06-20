@@ -1739,6 +1739,12 @@
                 const cell = target.closest('td');
                 const colIndex = cell ? cell.cellIndex : 0;
                 setSpeechStartCell(r.rowIndex, colIndex);
+                const speechPanel = document.getElementById('speechControlsPanel');
+                if (speechPanel && !speechPanel.classList.contains('expanded')) {
+                    speechPanel.classList.add('expanded');
+                    populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
+                    scheduleSpeechPanelAutoCollapse();
+                }
                 // If speech was paused, explicitly restart from the selected cell.
                 // Otherwise start speaking immediately from the selected cell's column.
                 if (speechPaused) {
