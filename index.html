@@ -1142,14 +1142,43 @@
         stopSpeech();
         currentSpeechColumn = col;
 
+        // Ensure the voice selector is populated for the language of the requested column
+        const langAbbrev = langs[col] || 'eng';
+        const langPrefix = getSpeechLangPrefixForColumn(col);
+        populateSpeechVoiceOptions(langPrefix, langAbbrev);
+
+        // If populate determined no available voice for this language, refuse to start
         if (!speechVoiceAvailable) {
             alert('No speech voice available for this language. Playback cannot start.');
             return;
         }
 
+        // Prefer the currently selected voice but ensure it matches the requested language.
+        // If it doesn't match, try to pick a voice that does. Do not use an English voice
+        // (e.g., Samantha) to read non-English text.
+        const expectedPrefix = (langPrefix || '').toLowerCase();
+        let selectedVoice = getSelectedSpeechVoice();
+        if (selectedVoice && expectedPrefix && !selectedVoice.lang.toLowerCase().startsWith(expectedPrefix)) {
+            // find a compatible voice
+            const match = availableSpeechVoices.find(v => expectedPrefix && v.lang.toLowerCase().startsWith(expectedPrefix));
+            if (match) {
+                selectedVoice = match;
+                // update selector to reflect the programmatic choice
+                const select = document.getElementById('speechVoiceSelect');
+                if (select) {
+                    const opt = Array.from(select.options).find(o => o.value === match.voiceURI);
+                    if (opt) select.value = match.voiceURI;
+                }
+                // persist the selection for this language
+                try { saveVoiceForLang(langAbbrev, match.voiceURI); } catch (e) { /* ignore */ }
+            } else {
+                alert('No compatible speech voice found for this language. Playback cannot start.');
+                return;
+            }
+        }
+
         const table = document.getElementById('chapterBodyTable');
         const utterance = new SpeechSynthesisUtterance(text);
-        const selectedVoice = getSelectedSpeechVoice();
         if (selectedVoice) {
             utterance.voice = selectedVoice;
             utterance.lang = selectedVoice.lang;
