@@ -333,8 +333,8 @@
         <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
             <img src="Figures/lang.png" alt="Choose languages">
         </button>
-        <button id="speechPanelToggle" class="nav-button delayed" aria-label="Show speech controls"
-            title="Speech controls">🔊</button>
+        <button id="_removed_speechPanelToggle_" class="nav-button delayed" 
+            title="Speech controls"></button>
         <div class="speech-controls" id="speechControlsPanel">
             <button id="openVoicesButton" type="button" class="nav-button delayed" aria-label="Open voices">🎙️</button>
             <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
@@ -1293,6 +1293,16 @@
             speechActive = false;
             speechPaused = false;
             updateSpeechToggleButtonState();
+            // Hide the cell outline and collapse the speech controls when playback finishes naturally
+            hideSpeechStartHighlight();
+            const speechPanel = document.getElementById('speechControlsPanel');
+            if (speechPanel) {
+                speechPanel.classList.remove('expanded');
+                speechPanel.classList.remove('voices-open');
+                closeSpeechSpeedDialog();
+                cancelSpeechPanelAutoCollapse();
+                cancelSpeechVoiceSelectAutoHide();
+            }
         };
         window.speechSynthesis.speak(utterance);
     }
@@ -1771,16 +1781,6 @@
             let r = b.insertRow(i + 1);
             r.classList.add('clickableRow');
             if (i == 0) r.classList.add('chapterHeading');
-            r.addEventListener('click', (event) => {
-                const target = event.target;
-                const cell = target.closest('td');
-                const colIndex = cell ? cell.cellIndex : 0;
-                setSpeechStartCell(r.rowIndex, colIndex);
-                if (speechActive) {
-                    // Immediately start speaking from the newly selected cell
-                    speakColumn(speechStartColumn);
-                }
-            });
 
             // Double-clicking a row should select that cell and start speaking immediately
             r.addEventListener('dblclick', (event) => {
