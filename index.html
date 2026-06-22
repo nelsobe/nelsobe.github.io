@@ -850,6 +850,63 @@
         availableSpeechVoices = window.speechSynthesis.getVoices();
     }
 
+    // Returns a Promise that resolves once speechSynthesis voices are actually
+    // available. On desktop they are usually ready synchronously; on Android
+    // Chrome they load asynchronously after 'voiceschanged'. Falls back after
+    // 3 seconds so the user is never left waiting forever.
+    function waitForVoices() {
+        return new Promise((resolve) => {
+            if (!('speechSynthesis' in window)) { resolve([]); return; }
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                availableSpeechVoices = voices;
+                resolve(voices);
+                return;
+            }
+            const onChanged = () => {
+                clearTimeout(timer);
+                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
+                availableSpeechVoices = window.speechSynthesis.getVoices();
+                resolve(availableSpeechVoices);
+            };
+            const timer = setTimeout(() => {
+                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
+                availableSpeechVoices = window.speechSynthesis.getVoices();
+                resolve(availableSpeechVoices);
+            }, 3000);
+            window.speechSynthesis.addEventListener('voiceschanged', onChanged);
+        });
+    }
+
+    // Returns a Promise that resolves once speechSynthesis voices are actually
+    // available. On desktop they're usually ready synchronously; on Android
+    // Chrome they load asynchronously after 'voiceschanged'. Falls back after
+    // 3 seconds so the user is never left waiting forever.
+    function waitForVoices() {
+        return new Promise((resolve) => {
+            if (!('speechSynthesis' in window)) { resolve([]); return; }
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                availableSpeechVoices = voices;
+                resolve(voices);
+                return;
+            }
+            const onChanged = () => {
+                clearTimeout(timer);
+                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
+                availableSpeechVoices = window.speechSynthesis.getVoices();
+                resolve(availableSpeechVoices);
+            };
+            const timer = setTimeout(() => {
+                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
+                // Still empty after timeout — proceed anyway; browser will use default
+                availableSpeechVoices = window.speechSynthesis.getVoices();
+                resolve(availableSpeechVoices);
+            }, 3000);
+            window.speechSynthesis.addEventListener('voiceschanged', onChanged);
+        });
+    }
+
     function getSpeechLangPreferences(langCode) {
         const prefs = {
             eng: ['en-US', 'en-GB', 'en'],
@@ -942,6 +999,10 @@
 
     function isSpeechSupportedForLanguage(langCode) {
         if (!('speechSynthesis' in window)) return false;
+        // If voices haven't loaded yet (common on Android Chrome, where getVoices()
+        // returns [] until voiceschanged fires), assume supported rather than
+        // blocking the user — the browser will use its default voice.
+        if (availableSpeechVoices.length === 0) return true;
         return getVoicesForLanguageCode(langCode).length > 0;
     }
 
@@ -1273,7 +1334,11 @@
         button.setAttribute('aria-label', isPlaying ? 'Pause speech' : 'Play speech');
     }
 
-    function handleVerseDoubleClick(targetCell) {
+    async function handleVerseDoubleClick(targetCell) {
+        await waitForVoices();
+        // Guard: if the user navigated away or tapped elsewhere during the
+        // async voice-load wait, targetCell may no longer be in the document.
+        if (!targetCell.isConnected) return;
         const langCode = getLanguageCodeForVerseCell(targetCell);
         if (!isSpeechSupportedForLanguage(langCode)) {
             clearSelectedVerseAndSpeechControls();
