@@ -146,7 +146,6 @@
             text-align: center;
         }
 
-        #navbar select.speech-column-select,
         #navbar select.speech-voice-select {
             font-size: 0.9rem;
             margin: 0 0.3rem;
@@ -176,12 +175,6 @@
             min-width: 8rem;
         }
 
-        /* Compact toggle button that reveals the speech panel */
-        #speechPanelToggle {
-            font-size: 1.1rem;
-            padding: 0.15rem 0.35rem;
-            margin-right: 0.2rem;
-        }
 
         #navbar .speech-speed-indicator {
             position: absolute;
@@ -333,10 +326,9 @@
         <button id="langPickerOpenDialog" class="nav-button delayed" aria-label="Choose languages">
             <img src="Figures/lang.png" alt="Choose languages">
         </button>
-        <button id="_removed_speechPanelToggle_" class="nav-button delayed" 
-            title="Speech controls"></button>
         <div class="speech-controls" id="speechControlsPanel">
-            <button id="openVoicesButton" type="button" class="nav-button delayed" aria-label="Open voices">🎙️</button>
+            <button id="openVoicesButton" type="button" class="nav-button delayed" aria-label="Open voices"
+                onclick="toggleVoiceSelector()">🎙️</button>
             <select id="speechVoiceSelect" class="speech-voice-select" aria-label="Select speech voice">
                 <option disabled selected>Loading voices...</option>
             </select>
@@ -481,7 +473,8 @@
     <!-- Tree Picker Dialog HTML -->
     <dialog id="pickerDialog">
         <form method="dialog">
-            <button type="button" autofocus style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">Hidden focus trap</button>
+            <button type="button" autofocus
+                style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">Hidden focus trap</button>
             <h3>Select Passage</h3>
             <p>
                 <label>
@@ -989,7 +982,8 @@
     let speechPanelAutoCollapseTimer = null;
     const SPEECH_PANEL_AUTO_COLLAPSE_MS = 3000; // milliseconds until auto-collapse
     let speechVoiceSelectAutoHideTimer = null;
-    const SPEECH_VOICE_LIST_AUTO_HIDE_MS = 3000; // milliseconds until voice list hide
+    const SPEECH_VOICE_LIST_AUTO_HIDE_MS = 10000; // milliseconds until voice list hide
+    let speechPlaybackSessionId = 0;
 
     function saveVoiceForLang(langAbbrev, voiceURI) {
         try {
@@ -1200,6 +1194,7 @@
         }
 
         stopSpeech();
+        const playbackSessionId = ++speechPlaybackSessionId;
         currentSpeechColumn = col;
 
         // Ensure the voice selector is populated for the language of the requested column
@@ -1273,6 +1268,7 @@
         highlightSpeechCell(currentSpeechRow);
 
         utterance.onboundary = (event) => {
+            if (playbackSessionId !== speechPlaybackSessionId) return;
             if (event.charIndex == null || !speechRows.length) return;
             for (let i = 0; i < speechRows.length; i++) {
                 if (event.charIndex < speechRows[i].endIndex) {
@@ -1292,6 +1288,8 @@
         speechPaused = false;
         updateSpeechToggleButtonState();
         utterance.onend = () => {
+            // Ignore stale callbacks from a previously canceled utterance.
+            if (playbackSessionId !== speechPlaybackSessionId) return;
             currentSpeechColumn = null;
             speechActive = false;
             speechPaused = false;
@@ -1510,6 +1508,19 @@
         speakColumn(speechStartColumn);
     }
 
+    function toggleVoiceSelector() {
+        const speechPanel = document.getElementById('speechControlsPanel');
+        if (!speechPanel) return;
+        const nowOpen = speechPanel.classList.toggle('voices-open');
+        if (nowOpen) {
+            cancelSpeechPanelAutoCollapse();
+            scheduleSpeechVoiceSelectAutoHide();
+        } else {
+            cancelSpeechVoiceSelectAutoHide();
+            scheduleSpeechPanelAutoCollapse();
+        }
+    }
+
     function scheduleSpeechPanelAutoCollapse() {
         cancelSpeechPanelAutoCollapse();
         if (speechActive) {
@@ -1558,6 +1569,8 @@
 
     function stopSpeech() {
         if ('speechSynthesis' in window) {
+            // Invalidate pending callbacks for any currently speaking utterance.
+            speechPlaybackSessionId++;
             window.speechSynthesis.cancel();
             currentSpeechColumn = null;
             speechActive = false;
@@ -1585,29 +1598,6 @@
             }
         }
     });
-
-    function speakColumnPrompt() {
-        const options = langs
-            .map((lang, index) => {
-                if (lang === 'none') return null;
-                const langName = langNames.find(item => item.ldsAbbrev === lang)?.ldsFull || lang;
-                return `${index + 1}: ${langName}`;
-            })
-            .filter(Boolean)
-            .join('\n');
-
-        const promptText = `Which column would you like to read?\n${options}`;
-        const choice = prompt(promptText, '1');
-        if (choice === null) return;
-
-        const column = parseInt(choice, 10) - 1;
-        if (Number.isNaN(column) || column < 0 || column >= langs.length || langs[column] === 'none') {
-            alert('Please enter a valid column number.');
-            return;
-        }
-
-        speakColumn(column);
-    }
 
     function setCookie(cname, cvalue, exdays) {
         const expires = new Date(Date.now() + exdays * 86400000).toUTCString();
@@ -1881,33 +1871,10 @@
                 });
             }
 
-            const panelToggle = document.getElementById('speechPanelToggle');
             const speechPanel = document.getElementById('speechControlsPanel');
-            if (panelToggle && speechPanel) {
-                panelToggle.addEventListener('click', () => {
-                    const expanded = speechPanel.classList.toggle('expanded');
-                    // If expanding, ensure voices are populated for current start column
-                    if (expanded) {
-                        populateSpeechVoiceOptions(getSpeechLangPrefixForColumn(speechStartColumn), langs[speechStartColumn] || 'eng');
-                        // Do not auto-focus the select on expand; provide an explicit
-                        // 'Open voices' button so mobile browsers don't pop open native pickers.
-                        // Clear any suppression so the start-cell outline is visible again
-                        speechHighlightSuppressed = false;
-                        highlightSpeechCell(speechStartRow);
-                        scheduleSpeechPanelAutoCollapse();
-                    } else {
-                        // if collapsing, also close any open speed dialog and cancel auto-collapse
-                        // and hide the voice selector if it was open.
-                        speechPanel.classList.remove('voices-open');
-                        cancelSpeechVoiceSelectAutoHide();
-                        closeSpeechSpeedDialog();
-                        cancelSpeechPanelAutoCollapse();
-                        // Hide the start-cell outline when the panel is collapsed
-                        hideSpeechStartHighlight();
-                    }
-                });
 
-                // Reset auto-collapse on interactions inside the speech panel
+            // Reset auto-collapse on interactions inside the speech panel
+            if (speechPanel) {
                 const resetEvents = ['mousemove', 'mouseenter', 'click', 'keydown', 'focusin'];
                 resetEvents.forEach(ev => {
                     speechPanel.addEventListener(ev, () => {
@@ -1915,28 +1882,7 @@
                     });
                 });
 
-                // Wire the explicit 'Open voices' button to toggle the visibility of the select.
-                const openVoicesBtn = document.getElementById('openVoicesButton');
-                if (openVoicesBtn) {
-                    openVoicesBtn.addEventListener('click', () => {
-                        if (!speechPanel.classList.contains('expanded')) {
-                            speechPanel.classList.add('expanded');
-                            scheduleSpeechPanelAutoCollapse();
-                        }
-                        const nowOpen = speechPanel.classList.toggle('voices-open');
-                        if (nowOpen) {
-                            cancelSpeechPanelAutoCollapse();
-                            scheduleSpeechVoiceSelectAutoHide();
-                            const sel = document.getElementById('speechVoiceSelect');
-                            if (sel) {
-                                try { sel.focus(); sel.click(); } catch (e) { /* ignore */ }
-                            }
-                        } else {
-                            cancelSpeechVoiceSelectAutoHide();
-                            scheduleSpeechPanelAutoCollapse();
-                        }
-                    });
-                }
+                // openVoicesButton is wired via onclick="toggleVoiceSelector()" in the HTML.
             }
 
             const toggleSpeechButton = document.getElementById('toggleSpeechButton');
