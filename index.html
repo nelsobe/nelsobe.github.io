@@ -871,34 +871,6 @@
             };
             const timer = setTimeout(() => {
                 window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
-                availableSpeechVoices = window.speechSynthesis.getVoices();
-                resolve(availableSpeechVoices);
-            }, 3000);
-            window.speechSynthesis.addEventListener('voiceschanged', onChanged);
-        });
-    }
-
-    // Returns a Promise that resolves once speechSynthesis voices are actually
-    // available. On desktop they're usually ready synchronously; on Android
-    // Chrome they load asynchronously after 'voiceschanged'. Falls back after
-    // 3 seconds so the user is never left waiting forever.
-    function waitForVoices() {
-        return new Promise((resolve) => {
-            if (!('speechSynthesis' in window)) { resolve([]); return; }
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                availableSpeechVoices = voices;
-                resolve(voices);
-                return;
-            }
-            const onChanged = () => {
-                clearTimeout(timer);
-                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
-                availableSpeechVoices = window.speechSynthesis.getVoices();
-                resolve(availableSpeechVoices);
-            };
-            const timer = setTimeout(() => {
-                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
                 // Still empty after timeout — proceed anyway; browser will use default
                 availableSpeechVoices = window.speechSynthesis.getVoices();
                 resolve(availableSpeechVoices);
@@ -919,6 +891,7 @@
             por: ['pt-BR', 'pt-PT', 'pt'],
             tah: ['ty-PF', 'ty'],
             jpn: ['ja-JP', 'ja'],
+            rus: ['ru-RU', 'ru'],
             zhs: ['zh-CN', 'cmn-CN', 'zh'],
             zho: ['zh-TW', 'zh-HK', 'cmn-TW', 'zh'],
             'cmn-Latn': ['cmn', 'zh-CN', 'zh-TW', 'zh'],
@@ -1472,12 +1445,13 @@
         { ldsFull: "Deutsch", ldsAbbrev: "deu" },        // Added 7 / 2025 
         { ldsFull: "Español", ldsAbbrev: "spa" },        // Added 7 / 2025 
         { ldsFull: "Français", ldsAbbrev: "fra" },       // Added 7 / 2025 
-        { "ldsFull": "Hiligaynon", "ldsAbbrev": "hil" }, // Added 6 / 2026
-        { "ldsFull": "íslenska", "ldsAbbrev": "isl" },   // Added 6 / 2026
-        { "ldsFull": "Norsk", "ldsAbbrev": "nor" },      // Added 6 / 2026
+        { ldsFull: "Hiligaynon", "ldsAbbrev": "hil" }, // Added 6 / 2026
+        { ldsFull: "íslenska", "ldsAbbrev": "isl" },   // Added 6 / 2026
+        { ldsFull: "Norsk", ldsAbbrev: "nor" },      // Added 6 / 2026
         { ldsFull: "日本語", ldsAbbrev: "jpn" },          // Added 8 / 2025
         { ldsFull: "Português(Brasil)", ldsAbbrev: "por" }, // Added 7 / 2025 
-        { "ldsFull": "Reo Tahiti", "ldsAbbrev": "tah" },  // Added 5 / 2026
+        { ldsFull: "Reo Tahiti", ldsAbbrev: "tah" },  // Added 5 / 2026
+        { ldsFull: "Русский", ldsAbbrev: "rus" },     // Added 6 / 2026
         { ldsFull: "None", ldsAbbrev: "none" },
     ];
 
