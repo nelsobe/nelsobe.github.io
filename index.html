@@ -591,6 +591,7 @@
     let speedSelectAnchorCell = null;
     let pauseLatch = false;
     let availableSpeechVoices = [];
+    let waitForVoicesPromise = null;
     let activeVoiceLabel = 'none';
     let preferredVoiceByLang = {};
     let currentVoiceSelectLangCode = null;
@@ -855,28 +856,38 @@
     // Chrome they load asynchronously after 'voiceschanged'. Falls back after
     // 3 seconds so the user is never left waiting forever.
     function waitForVoices() {
-        return new Promise((resolve) => {
-            if (!('speechSynthesis' in window)) { resolve([]); return; }
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                availableSpeechVoices = voices;
-                resolve(voices);
-                return;
-            }
-            const onChanged = () => {
+        if (!('speechSynthesis' in window)) return Promise.resolve([]);
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            availableSpeechVoices = voices;
+            return Promise.resolve(voices);
+        }
+
+        if (waitForVoicesPromise) return waitForVoicesPromise;
+
+        waitForVoicesPromise = new Promise((resolve) => {
+            const synth = window.speechSynthesis;
+            const finish = () => {
                 clearTimeout(timer);
-                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
-                availableSpeechVoices = window.speechSynthesis.getVoices();
-                resolve(availableSpeechVoices);
+                synth.removeEventListener('voiceschanged', onChanged);
+                availableSpeechVoices = synth.getVoices();
+                const result = availableSpeechVoices;
+                waitForVoicesPromise = null;
+                resolve(result);
+            };
+            const onChanged = () => {
+                finish();
             };
             const timer = setTimeout(() => {
-                window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
-                // Still empty after timeout — proceed anyway; browser will use default
-                availableSpeechVoices = window.speechSynthesis.getVoices();
-                resolve(availableSpeechVoices);
-            }, 3000);
-            window.speechSynthesis.addEventListener('voiceschanged', onChanged);
+                // Still empty after timeout — proceed anyway; browser may use default.
+                finish();
+            }, 5000);
+
+            synth.addEventListener('voiceschanged', onChanged);
         });
+
+        return waitForVoicesPromise;
     }
 
     function getSpeechLangPreferences(langCode) {
@@ -906,6 +917,18 @@
         return activeLangs[verseCell.cellIndex] || activeLangs[0] || 'eng';
     }
 
+    function normalizeSpeechLangTag(tag) {
+        // Android/browser engines can emit underscore separators or mixed casing.
+        return (tag || '').trim().toLowerCase().replace(/_/g, '-');
+    }
+
+    function voiceMatchesLanguagePreference(voiceLangRaw, prefRaw) {
+        const voiceLang = normalizeSpeechLangTag(voiceLangRaw);
+        const pref = normalizeSpeechLangTag(prefRaw);
+        if (!voiceLang || !pref) return false;
+        return voiceLang === pref || voiceLang.startsWith(pref + '-');
+    }
+
     function pickVoiceForLanguageCode(langCode) {
         if (!availableSpeechVoices.length) {
             refreshSpeechVoices();
@@ -918,19 +941,18 @@
             if (preferred) return preferred;
         }
 
-        const preferences = getSpeechLangPreferences(langCode).map(p => p.toLowerCase());
+        const preferences = getSpeechLangPreferences(langCode).map(normalizeSpeechLangTag);
 
         // Prefer exact language-tag matches first.
         for (const pref of preferences) {
-            const exact = availableSpeechVoices.find(v => (v.lang || '').toLowerCase() === pref);
+            const exact = availableSpeechVoices.find(v => normalizeSpeechLangTag(v.lang) === pref);
             if (exact) return exact;
         }
 
         // Then accept language-family matches (e.g. "en" -> "en-US").
         for (const pref of preferences) {
             const family = availableSpeechVoices.find(v => {
-                const voiceLang = (v.lang || '').toLowerCase();
-                return voiceLang === pref || voiceLang.startsWith(pref + '-');
+                return voiceMatchesLanguagePreference(v.lang, pref);
             });
             if (family) return family;
         }
@@ -942,14 +964,13 @@
         if (!availableSpeechVoices.length) {
             refreshSpeechVoices();
         }
-        const preferences = getSpeechLangPreferences(langCode).map(p => p.toLowerCase());
+        const preferences = getSpeechLangPreferences(langCode).map(normalizeSpeechLangTag);
         const matches = [];
         const seen = new Set();
 
         for (const pref of preferences) {
             for (const voice of availableSpeechVoices) {
-                const voiceLang = (voice.lang || '').toLowerCase();
-                if (voiceLang === pref || voiceLang.startsWith(pref + '-')) {
+                if (voiceMatchesLanguagePreference(voice.lang, pref)) {
                     if (!seen.has(voice.voiceURI)) {
                         seen.add(voice.voiceURI);
                         matches.push(voice);
@@ -976,7 +997,14 @@
         // returns [] until voiceschanged fires), assume supported rather than
         // blocking the user — the browser will use its default voice.
         if (availableSpeechVoices.length === 0) return true;
-        return getVoicesForLanguageCode(langCode).length > 0;
+        const matches = getVoicesForLanguageCode(langCode);
+        if (matches.length > 0) return true;
+
+        // Some Android devices expose a usable default English voice with
+        // atypical/empty language metadata. Avoid false negatives for English.
+        if (langCode === 'eng') return availableSpeechVoices.length > 0;
+
+        return false;
     }
 
     function populateVoiceDialogForCurrentLanguage() {
