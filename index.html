@@ -709,6 +709,22 @@
                 this._applySelection(saved);
 
                 this.dialog.showModal();
+                requestAnimationFrame(() => {
+                    const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
+                    if (cancelBtn) {
+                        try {
+                            cancelBtn.focus({ preventScroll: true });
+                        } catch {
+                            cancelBtn.focus();
+                        }
+                    }
+                    // Some Android browsers auto-focus the first <select> in a dialog.
+                    // If that happens, blur it so the dropdown does not pop open.
+                    const active = document.activeElement;
+                    if (active && active.tagName === 'SELECT') {
+                        active.blur();
+                    }
+                });
 
                 const handler = () => {
                     this.dialog.removeEventListener("close", handler);
@@ -1455,6 +1471,21 @@
                 }, { once: true });
 
                 this.dialog.showModal();
+                requestAnimationFrame(() => {
+                    const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
+                    if (cancelBtn) {
+                        try {
+                            cancelBtn.focus({ preventScroll: true });
+                        } catch {
+                            cancelBtn.focus();
+                        }
+                    }
+                    // Prevent Android from auto-opening a select when dialog appears.
+                    const active = document.activeElement;
+                    if (active && active.tagName === 'SELECT') {
+                        active.blur();
+                    }
+                });
             });
         }
 
