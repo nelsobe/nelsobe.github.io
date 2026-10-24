@@ -461,7 +461,7 @@
                 </label>
             </p>
             <div class="dialog-actions">
-                <button value="cancel" class="dialog-btn">Cancel</button>
+                <button value="cancel" class="dialog-btn" autofocus>Cancel</button>
                 <button value="ok" class="dialog-btn">OK</button>
             </div>
         </form>
@@ -709,22 +709,19 @@
                 this._applySelection(saved);
 
                 this.dialog.showModal();
-                requestAnimationFrame(() => {
-                    const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
-                    if (cancelBtn) {
-                        try {
-                            cancelBtn.focus({ preventScroll: true });
-                        } catch {
-                            cancelBtn.focus();
-                        }
+                const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
+                if (cancelBtn) {
+                    try {
+                        cancelBtn.focus({ preventScroll: true });
+                    } catch {
+                        cancelBtn.focus();
                     }
-                    // Some Android browsers auto-focus the first <select> in a dialog.
-                    // If that happens, blur it so the dropdown does not pop open.
-                    const active = document.activeElement;
-                    if (active && active.tagName === 'SELECT') {
-                        active.blur();
-                    }
-                });
+                }
+                // Some browsers still auto-focus a select when the dialog opens.
+                const active = document.activeElement;
+                if (active && active.tagName === 'SELECT') {
+                    active.blur();
+                }
 
                 const handler = () => {
                     this.dialog.removeEventListener("close", handler);
@@ -1421,7 +1418,7 @@
           <select name="lang2"></select>
         </div>
         <div class="dialog-actions">
-            <button value="cancel" class="dialog-btn">Cancel</button>
+            <button value="cancel" class="dialog-btn" autofocus>Cancel</button>
             <button value="ok" class="dialog-btn">OK</button>
         </div>
       </form>
@@ -1471,21 +1468,19 @@
                 }, { once: true });
 
                 this.dialog.showModal();
-                requestAnimationFrame(() => {
-                    const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
-                    if (cancelBtn) {
-                        try {
-                            cancelBtn.focus({ preventScroll: true });
-                        } catch {
-                            cancelBtn.focus();
-                        }
+                const cancelBtn = this.dialog.querySelector('.dialog-actions button[value="cancel"]');
+                if (cancelBtn) {
+                    try {
+                        cancelBtn.focus({ preventScroll: true });
+                    } catch {
+                        cancelBtn.focus();
                     }
-                    // Prevent Android from auto-opening a select when dialog appears.
-                    const active = document.activeElement;
-                    if (active && active.tagName === 'SELECT') {
-                        active.blur();
-                    }
-                });
+                }
+                // Prevent a browser from leaving a select focused when the dialog appears.
+                const active = document.activeElement;
+                if (active && active.tagName === 'SELECT') {
+                    active.blur();
+                }
             });
         }
 
@@ -1587,6 +1582,8 @@
 
     // Caching stuff
     function cacheWrite(lang, id, chap, s) {
+        console.log("Cache write: " + s);
+
         let key = lang + id + chap;
         let success;
         do {
@@ -1612,13 +1609,14 @@
 
     function cacheLookup(lang, id, chap) {
         // This can be used to disable caching 
-       return null;
+        //return null;
 
         let key = lang + id + chap;
         console.log("cacheLookup: " + key);
         let s = window.sessionStorage.getItem(key);
         if (s != null) {
             console.log("  Found it...");
+            console.log(s)
             return (s);
         }
         console.log("  Didn't find it...");
