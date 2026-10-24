@@ -576,7 +576,6 @@
         len: rec.len,
         lang: langs,
     };
-    let responseText = null;
     let fetchedData = [];
     let minFontSize = 30;
     let speechUiState = 'IDLE';
@@ -1582,7 +1581,9 @@
 
     // Caching stuff
     function cacheWrite(lang, id, chap, s) {
-        console.log("Cache write: " + s);
+        if (s == null) return;
+
+        console.log("Cache write: " + s + " " + typeof s);
 
         let key = lang + id + chap;
         let success;
@@ -1614,9 +1615,12 @@
         let key = lang + id + chap;
         console.log("cacheLookup: " + key);
         let s = window.sessionStorage.getItem(key);
+        if (s === "null") {
+            window.sessionStorage.removeItem(key);
+            s = null;
+        }
         if (s != null) {
             console.log("  Found it...");
-            console.log(s)
             return (s);
         }
         console.log("  Didn't find it...");
@@ -1630,13 +1634,14 @@
         // Load data for each language desired
         for (let i = 0; i < langs.length; i++) {
             if (langs[i] != 'none') {
-                responseText = null;
                 let s = (cacheLookup(langs[i], params.id, params.chap));
                 if (s == null) {
                     console.log(`loadXMLDoc: ${i} ${langs[i]} ${params.id} ${params.chap}`);
-                    await loadXMLDoc(i, langs[i], params.id, params.chap);
-                    console.log(`Fetched: ${langs[i]} ${params.id} ${params.chap}`);
-                    cacheWrite(langs[i], params.id, params.chap, responseText);
+                    const loadedText = await loadXMLDoc(i, langs[i], params.id, params.chap);
+                    if (loadedText !== null) {
+                        console.log(`Fetched: ${langs[i]} ${params.id} ${params.chap}`);
+                        cacheWrite(langs[i], params.id, params.chap, loadedText);
+                    }
 
                 }
                 else {
@@ -1667,8 +1672,10 @@
             const text = await response.text();
             console.log(JSON.stringify(text));
             processResponse(col, text);
+            return text;
         } catch (error) {
             console.error(`Failed to fetch: ${error.message}`);
+            return null;
         }
     }
 
